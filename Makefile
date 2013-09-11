@@ -155,7 +155,7 @@ uint32.h uint64.h
 cachetest: \
 load cachetest.o cache.o libtai.a buffer.a alloc.a unix.a byte.a
 	./load cachetest cache.o libtai.a buffer.a alloc.a unix.a \
-	byte.a 
+	byte.a dns.a
 
 cachetest.o: \
 compile cachetest.c buffer.h exit.h cache.h uint32.h uint64.h str.h
@@ -228,11 +228,11 @@ choose compile trydrent.c direntry.h1 direntry.h2
 dns.a: \
 makelib dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_mx.o \
 dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
-dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o
+dns_resolve.o dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o
 	./makelib dns.a dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
 	dns_ipq.o dns_mx.o dns_name.o dns_nd.o dns_packet.o \
 	dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
-	dns_sortip.o dns_transmit.o dns_txt.o
+	dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o
 
 dns_dfd.o: \
 compile dns_dfd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
@@ -300,6 +300,10 @@ dns_resolve.o: \
 compile dns_resolve.c iopause.h taia.h tai.h uint64.h taia.h byte.h \
 dns.h stralloc.h gen_alloc.h iopause.h taia.h
 	./compile dns_resolve.c
+
+dns_rotateip.o: \
+compile dns_rotateip.c byte.h dns.h stralloc.h gen_alloc.h
+	./compile dns_rotateip.c
 
 dns_sortip.o: \
 compile dns_sortip.c byte.h dns.h stralloc.h gen_alloc.h iopause.h \
@@ -1025,9 +1029,9 @@ dns.h stralloc.h iopause.h taia.h tai.h uint64.h taia.h
 
 tinydns-get: \
 load tinydns-get.o tdlookup.o response.o printpacket.o printrecord.o \
-parsetype.o dns.a libtai.a cdb.a buffer.a alloc.a unix.a byte.a
+parsetype.o dns.a env.a libtai.a cdb.a buffer.a alloc.a unix.a byte.a
 	./load tinydns-get tdlookup.o response.o printpacket.o \
-	printrecord.o parsetype.o dns.a libtai.a cdb.a buffer.a \
+	printrecord.o parsetype.o dns.a env.a libtai.a cdb.a buffer.a \
 	alloc.a unix.a byte.a 
 
 tinydns-get.o: \

@@ -12,6 +12,7 @@
 #include "parsetype.h"
 #include "ip4.h"
 #include "dns.h"
+#include "tdlookup.h"
 
 extern int respond(char *,char *,char *);
 
@@ -35,6 +36,8 @@ static stralloc out;
 int main(int argc,char **argv)
 {
   uint16 u16;
+
+  if (!tdlookup_init()) strerr_die2sys(111,FATAL,"tdlookup_init failed");
 
   if (!*argv) usage();
 

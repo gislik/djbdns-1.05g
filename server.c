@@ -55,12 +55,11 @@ static int doit(void)
   if (byte_equal(qtype,2,DNS_T_AXFR)) goto NOTIMP;
 
   case_lowerb(q,dns_domain_length(q));
-  if (!respond(q,qtype,ip)) {
-    qlog(ip,port,header,q,qtype," - ");
-    return 0;
+  switch(respond(q,qtype,ip)) {
+    case 0: qlog(ip,port,header,q,qtype," - "); return 0;
+    case 2: qlog(ip,port,header,q,qtype," B "); return 1;
+    default: qlog(ip,port,header,q,qtype," + "); return 1;
   }
-  qlog(ip,port,header,q,qtype," + ");
-  return 1;
 
   NOTIMP:
   response[3] &= ~15;

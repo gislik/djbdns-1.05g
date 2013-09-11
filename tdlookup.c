@@ -4,10 +4,53 @@
 #include "tai.h"
 #include "cdb.h"
 #include "byte.h"
+#include "env.h"
+#include "ip4.h"
+#include "str.h"
+#include "stralloc.h"
 #include "case.h"
 #include "dns.h"
 #include "seek.h"
 #include "response.h"
+
+static char lameip[4];
+static char *lamemx;
+static stralloc lametxt;
+
+int tdlookup_init(void)
+{
+  char *x;
+  char ch;
+  int i;
+  int j;
+  int k;
+
+  x = env_get("LAME_A");
+  if (x)
+    if (!ip4_scan(x,lameip))
+      byte_zero(lameip,4);
+
+  x = env_get("LAME_MX");
+  if (x)
+    if (!dns_domain_fromdot(&lamemx,x,str_len(x)))
+      return 0;
+
+  x = env_get("LAME_TXT");
+  if (x) {
+    i = 0;
+    j = str_len(x);
+    while (i < j) {
+      k = j - i;
+      if (k > 255) k = 255;
+      ch = k;
+      if (!stralloc_append(&lametxt,&ch)) return 0;
+      if (!stralloc_catb(&lametxt,x + i,k)) return 0;
+      i += k;
+    }
+  }
+
+  return 1;
+}
 
 static int want(const char *owner,const char type[2])
 {
@@ -136,7 +179,34 @@ static int doit(char *q,char qtype[2])
       if (byte_equal(type,2,DNS_T_NS)) flagns = 1;
     }
     if (flagns) break;
-    if (!*control) return 0; /* q is not within our bailiwick */
+    if (!*control) {
+      /* q is not within our bailiwick */
+      flagfound = 0;
+      if (byte_diff(lameip,4,"\0\0\0\0"))
+	if (byte_equal(qtype,2,DNS_T_A) || byte_equal(qtype,2,DNS_T_ANY)) {
+	  if (!response_rstart(q,DNS_T_A,3600)) return 0;
+	  if (!response_addbytes(lameip,4)) return 0;
+	  response_rfinish(RESPONSE_ANSWER);
+	  flagfound = 1;
+	}
+      if (lamemx)
+	if (byte_equal(qtype,2,DNS_T_MX) || byte_equal(qtype,2,DNS_T_ANY)) {
+	  if (!response_rstart(q,DNS_T_MX,3600)) return 0;
+	  if (!response_addbytes("\0\0",2)) return 0;
+	  if (!response_addname(lamemx)) return 0;
+	  response_rfinish(RESPONSE_ANSWER);
+	  flagfound = 1;
+	}
+      if (lametxt.len)
+	if (byte_equal(qtype,2,DNS_T_TXT) || byte_equal(qtype,2,DNS_T_ANY)) {
+	  if (!response_rstart(q,DNS_T_TXT,3600)) return 0;
+	  if (!response_addbytes(lametxt.s,lametxt.len)) return 0;
+	  response_rfinish(RESPONSE_ANSWER);
+	  flagfound = 1;
+	}
+      if (flagfound) return 2;
+      return 0;
+    }
     control += *control;
     control += 1;
   }
@@ -280,15 +350,24 @@ static int doit(char *q,char qtype[2])
 
 int respond(char *q,char qtype[2],char ip[4])
 {
-  int fd;
+  static struct tai cdb_valid = { 0 };
+  static int fd = -1;
+  struct tai one_second;
   int r;
   char key[6];
 
   tai_now(&now);
-  fd = open_read("data.cdb");
-  if (fd == -1) return 0;
-  cdb_init(&c,fd);
-
+  if (tai_less(&cdb_valid, &now)) {
+    if (fd != -1) {
+      cdb_free(&c);
+      close(fd);
+    }
+    fd = open_read("data.cdb");
+    if (fd == -1) return 0;
+    cdb_init(&c,fd);
+    tai_uint(&one_second, 1);
+    tai_add(&cdb_valid, &now, &one_second);
+  }
   byte_zero(clientloc,2);
   key[0] = 0;
   key[1] = '%';
@@ -304,7 +383,5 @@ int respond(char *q,char qtype[2],char ip[4])
 
   r = doit(q,qtype);
 
-  cdb_free(&c);
-  close(fd);
   return r;
 }
