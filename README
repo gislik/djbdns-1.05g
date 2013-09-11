@@ -1,3 +1,9 @@
+patchlevel fg1
+20010313
+by Florent Guillaume <florent.guillaume@mail.com>
+patch home page: http://mapage.noos.fr/efgeor/djbdns/index.html
+Uses parts of Felix von Leitner's djb-0.5.2 package: http://www.fefe.de/djb/
+
 djbdns 1.05
 20010211
 Copyright 2001

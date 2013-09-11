@@ -4,6 +4,8 @@ SHELL=/bin/sh
 
 default: it
 
+include Makefile.sig
+
 alloc.a: \
 makelib alloc.o alloc_re.o getln.o getln2.o stralloc_cat.o \
 stralloc_catb.o stralloc_cats.o stralloc_copy.o stralloc_eady.o \
@@ -151,12 +153,12 @@ compile byte_zero.c byte.h
 
 cache.o: \
 compile cache.c alloc.h byte.h uint32.h exit.h tai.h uint64.h cache.h \
-uint32.h uint64.h
+uint32.h uint64.h env.h error.h open.h openreadclose.h
 	./compile cache.c
 
 cachetest: \
-load cachetest.o cache.o libtai.a buffer.a alloc.a unix.a byte.a
-	./load cachetest cache.o libtai.a buffer.a alloc.a unix.a \
+load cachetest.o cache.o libtai.a buffer.a alloc.a unix.a byte.a env.a
+	./load cachetest cache.o libtai.a buffer.a alloc.a unix.a env.a \
 	byte.a dns.a
 
 cachetest.o: \
@@ -1140,31 +1142,3 @@ walldns.o: \
 compile walldns.c byte.h dns.h stralloc.h gen_alloc.h iopause.h \
 taia.h tai.h uint64.h taia.h dd.h response.h uint32.h
 	./compile walldns.c
-
-sig.o: \
-compile sig.c sig.h
-	./compile sig.c
-
-sig_block.o: \
-compile sig_block.c sig.h hassgprm.h
-	./compile sig_block.c
-
-sig_catch.o: \
-compile sig_catch.c sig.h hassgact.h
-	./compile sig_catch.c
-
-sig_pause.o: \
-compile sig_pause.c sig.h hassgprm.h
-	./compile sig_pause.c
-
-sig.a: \
-makelib sig.o sig_block.o sig_catch.o sig_pause.o
-	./makelib sig.a sig.o sig_block.o sig_catch.o sig_pause.o
-
-hassgact.h: \
-choose compile load trysgact.c hassgact.h1 hassgact.h2
-	./choose cl trysgact hassgact.h1 hassgact.h2 > hassgact.h
-
-hassgprm.h: \
-choose compile load trysgprm.c hassgprm.h1 hassgprm.h2
-	./choose cl trysgprm hassgprm.h1 hassgprm.h2 > hassgprm.h

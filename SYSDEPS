@@ -7,6 +7,4 @@ iopause.h
 direntry.h
 hasshsgr.h
 hasdevtcp.h
-hassgact.h
-hassgprm.h
 socket.lib
