@@ -22,6 +22,7 @@
 #include "log.h"
 #include "okclient.h"
 #include "droproot.h"
+#include "sig.h"
 #include "maxclient.h"
 
 static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])

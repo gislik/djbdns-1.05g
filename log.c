@@ -88,6 +88,12 @@ static void name(const char *q)
   }
 }
 
+void log_reread(void)
+{
+  string("rereading servers configuration");
+  line();
+}
+
 void log_startup(void)
 {
   string("starting");
