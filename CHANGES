@@ -270,6 +270,12 @@
 		tnx Chris Saia.
 20000325
 	version: DNScache 1.00.
+20000824 Matthias Andree
+	feature: catch hangup signal and reread roots
+	patch level: ma1
+20000830 Matthias Andree
+	portability: use sig library rather than calling signal directly	
+	patch level: ma2
 20000914
 	ui: axfr-get decodes PTR. tnx to various people.
 	ui: added dnsqr.

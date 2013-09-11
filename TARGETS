@@ -214,3 +214,10 @@ instcheck
 it
 setup
 check
+sig.o
+sig.a
+sig_catch.o
+sig_block.o
+hassgact.h
+hassgprm.h
+sig_pause.o

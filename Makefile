@@ -320,10 +320,10 @@ stralloc.h iopause.h taia.h tai.h uint64.h taia.h
 dnscache: \
 load dnscache.o droproot.o okclient.o log.o cache.o query.o qmerge.o \
 response.o dd.o roots.o iopause.o prot.o dns.a env.a alloc.a buffer.a \
-libtai.a unix.a byte.a socket.lib
+libtai.a unix.a byte.a sig.a socket.lib
 	./load dnscache droproot.o okclient.o log.o cache.o \
 	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o dns.a \
-	env.a alloc.a buffer.a libtai.a unix.a byte.a  `cat \
+	env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a `cat \
 	socket.lib`
 
 dnscache-conf: \
@@ -1109,3 +1109,31 @@ walldns.o: \
 compile walldns.c byte.h dns.h stralloc.h gen_alloc.h iopause.h \
 taia.h tai.h uint64.h taia.h dd.h response.h uint32.h
 	./compile walldns.c
+
+sig.o: \
+compile sig.c sig.h
+	./compile sig.c
+
+sig_block.o: \
+compile sig_block.c sig.h hassgprm.h
+	./compile sig_block.c
+
+sig_catch.o: \
+compile sig_catch.c sig.h hassgact.h
+	./compile sig_catch.c
+
+sig_pause.o: \
+compile sig_pause.c sig.h hassgprm.h
+	./compile sig_pause.c
+
+sig.a: \
+makelib sig.o sig_block.o sig_catch.o sig_pause.o
+	./makelib sig.a sig.o sig_block.o sig_catch.o sig_pause.o
+
+hassgact.h: \
+choose compile load trysgact.c hassgact.h1 hassgact.h2
+	./choose cl trysgact hassgact.h1 hassgact.h2 > hassgact.h
+
+hassgprm.h: \
+choose compile load trysgprm.c hassgprm.h1 hassgprm.h2
+	./choose cl trysgprm hassgprm.h1 hassgprm.h2 > hassgprm.h
