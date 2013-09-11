@@ -185,6 +185,8 @@ static int doit(struct query *z,int state)
   int flagcname;
   int flagreferral;
   int flagsoa;
+  int flagexact;
+  char *ed = 0; 
   uint32 ttl;
   uint32 soattl;
   uint32 cnamettl;
@@ -374,8 +376,16 @@ static int doit(struct query *z,int state)
     }
   }
 
+  flagexact = -1;
   for (;;) {
-    if (roots(z->servers[z->level],d)) {
+    if (flagexact < 0) { 
+      flagexact = 0;
+      if(typematch(DNS_T_A, dtype)) { 
+        if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
+        if (roots(z->servers[z->level], ed)) flagexact = 1;
+      }
+    }
+    if (flagexact || roots(z->servers[z->level],d)) {
       for (j = 0;j < QUERY_MAXNS;++j)
         dns_domain_free(&z->ns[z->level][j]);
       z->control[z->level] = d;

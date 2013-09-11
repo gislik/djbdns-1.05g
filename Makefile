@@ -7,11 +7,13 @@ default: it
 alloc.a: \
 makelib alloc.o alloc_re.o getln.o getln2.o stralloc_cat.o \
 stralloc_catb.o stralloc_cats.o stralloc_copy.o stralloc_eady.o \
-stralloc_num.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o
+stralloc_num.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
+stralloc_ppnb.o stralloc_ppnd.o stralloc_ppns.o stralloc_free.o
 	./makelib alloc.a alloc.o alloc_re.o getln.o getln2.o \
 	stralloc_cat.o stralloc_catb.o stralloc_cats.o \
 	stralloc_copy.o stralloc_eady.o stralloc_num.o \
-	stralloc_opyb.o stralloc_opys.o stralloc_pend.o
+	stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
+	stralloc_ppnb.o stralloc_ppns.o stralloc_ppnd.o stralloc_free.o
 
 alloc.o: \
 compile alloc.c alloc.h error.h
@@ -228,16 +230,21 @@ choose compile trydrent.c direntry.h1 direntry.h2
 dns.a: \
 makelib dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_mx.o \
 dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
-dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o
+dns_resolve.o dns_sortip.o dns_transmit.o dns_txt.o dns_dpnd.o
 	./makelib dns.a dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
 	dns_ipq.o dns_mx.o dns_name.o dns_nd.o dns_packet.o \
 	dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
-	dns_sortip.o dns_transmit.o dns_txt.o
+	dns_sortip.o dns_transmit.o dns_txt.o dns_dpnd.o
 
 dns_dfd.o: \
 compile dns_dfd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
 iopause.h taia.h tai.h uint64.h taia.h
 	./compile dns_dfd.c
+
+dns_dpnd.o: \
+compile dns_dpnd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
+iopause.h taia.h tai.h uint64.h taia.h
+	./compile dns_dpnd.c
 
 dns_domain.o: \
 compile dns_domain.c error.h alloc.h case.h byte.h dns.h stralloc.h \
@@ -881,6 +888,26 @@ stralloc_pend.o: \
 compile stralloc_pend.c alloc.h stralloc.h gen_alloc.h \
 gen_allocdefs.h
 	./compile stralloc_pend.c
+
+stralloc_free.o: \
+compile stralloc_free.c alloc.h stralloc.h gen_alloc.h \
+gen_allocdefs.h
+	./compile stralloc_free.c
+
+stralloc_ppnb.o: \
+compile stralloc_ppnb.c alloc.h stralloc.h gen_alloc.h byte.h \
+gen_allocdefs.h
+	./compile stralloc_ppnb.c
+
+stralloc_ppns.o: \
+compile stralloc_ppns.c alloc.h stralloc.h gen_alloc.h byte.h \
+gen_allocdefs.h
+	./compile stralloc_ppns.c
+
+stralloc_ppnd.o: \
+compile stralloc_ppnd.c alloc.h stralloc.h gen_alloc.h byte.h \
+gen_allocdefs.h
+	./compile stralloc_ppnd.c
 
 strerr_die.o: \
 compile strerr_die.c buffer.h exit.h strerr.h
