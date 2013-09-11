@@ -324,6 +324,7 @@ int main()
 
   droproot(FATAL);
   dns_random_init(seed);
+  if (!tdlookup_init()) strerr_die2sys(111,FATAL,"tdlookup_init failed");
 
   axfr = env_get("AXFR");
   

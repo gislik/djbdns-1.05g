@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <signal.h>
 #include "env.h"
 #include "exit.h"
 #include "scan.h"
@@ -24,6 +25,8 @@
 #include "droproot.h"
 #include "sig.h"
 #include "maxclient.h"
+
+stralloc ignoreip = {0};
 
 static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])
 {
@@ -389,8 +392,10 @@ char seed[128];
 int main()
 {
   char *x;
+  unsigned int i, j, k;
   unsigned long cachesize;
 
+  signal(SIGPIPE, SIG_IGN);
   x = env_get("IP");
   if (!x)
     strerr_die2x(111,FATAL,"$IP not set");
@@ -430,6 +435,20 @@ int main()
   scan_ulong(x,&cachesize);
   if (!cache_init(cachesize))
     strerr_die3x(111,FATAL,"not enough memory for cache of size ",x);
+
+  if (openreadclose("ignoreip",&ignoreip,64) < 0) 
+    strerr_die2x(111,FATAL,"trouble reading ignoreip");
+  for(j = k = i = 0; i < ignoreip.len; i++)
+    if (ignoreip.s[i] == '\n')  {
+      ignoreip.s[i] = '\0';
+      if (j + 4 > i)
+        strerr_die3x(111,FATAL,"badly malformed ip4 address ",ignoreip.s+k);
+      if (!ip4_scan(ignoreip.s+k,ignoreip.s+j))
+        strerr_die3x(111,FATAL,"unable to parse address in ignoreip ",ignoreip.s+k);
+      j += 4;
+      k = i + 1;
+    }
+  ignoreip.len = j;
 
   if (env_get("HIDETTL"))
     response_hidettl();

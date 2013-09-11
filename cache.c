@@ -4,7 +4,7 @@
 #include "exit.h"
 #include "tai.h"
 #include "cache.h"
-
+#include "dns.h"
 uint64 cache_motion = 0;
 
 static char *x = 0;
@@ -111,7 +111,7 @@ char *cache_get(const char *key,unsigned int keylen,unsigned int *datalen,uint32
         u = get4(pos + 8);
         if (u > size - pos - 20 - keylen) cache_impossible();
         *datalen = u;
-
+	if byte_equal(key,2,DNS_T_A)   dns_rotateip(x + pos + 20 + keylen,u);
         return x + pos + 20 + keylen;
       }
     }
@@ -188,7 +188,7 @@ int cache_init(unsigned int cachesize)
     x = 0;
   }
 
-  if (cachesize > 1000000000) cachesize = 1000000000;
+  if (cachesize > 4000000000) cachesize = 4000000000;
   if (cachesize < 100) cachesize = 100;
   size = cachesize;
 

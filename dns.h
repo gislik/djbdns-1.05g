@@ -20,6 +20,7 @@
 #define DNS_T_SIG "\0\30"
 #define DNS_T_KEY "\0\31"
 #define DNS_T_AAAA "\0\34"
+#define DNS_T_SRV "\0\41"
 #define DNS_T_AXFR "\0\374"
 #define DNS_T_ANY "\0\377"
 
@@ -43,6 +44,7 @@ extern void dns_random_init(const char *);
 extern unsigned int dns_random(unsigned int);
 
 extern void dns_sortip(char *,unsigned int);
+extern void dns_rotateip(char *,unsigned int);
 
 extern void dns_domain_free(char **);
 extern int dns_domain_copy(char **,const char *);
