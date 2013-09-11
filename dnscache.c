@@ -385,6 +385,17 @@ static void doit(void)
   }
 }
   
+#ifdef DUMPCACHE
+static void do_dump(void)
+{
+  int r;
+  r = cache_dump();
+  if (r < 0)
+    r = errno;
+  log_dump(r);
+}
+#endif
+
 #define FATAL "dnscache: fatal: "
 
 char seed[128];
@@ -435,6 +446,16 @@ int main()
   scan_ulong(x,&cachesize);
   if (!cache_init(cachesize))
     strerr_die3x(111,FATAL,"not enough memory for cache of size ",x);
+#ifdef DUMPCACHE
+  x = env_get("SLURPCACHE");
+  if (x) {
+    int nb = cache_slurp(x);
+    if (nb < 0)
+      strerr_die4sys(111,FATAL,"unable to slurp cache ",x," : ");
+    else
+      log_slurp(nb);
+  }
+#endif
 
   if (openreadclose("ignoreip",&ignoreip,64) < 0) 
     strerr_die2x(111,FATAL,"trouble reading ignoreip");
@@ -460,6 +481,10 @@ int main()
 
   if (socket_listen(tcp53,20) == -1)
     strerr_die2sys(111,FATAL,"unable to listen on TCP socket: ");
+
+#ifdef DUMPCACHE
+  sig_catch(sig_alarm,do_dump);
+#endif
 
   log_startup();
   doit();

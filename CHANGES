@@ -380,3 +380,5 @@
 	ui: servers print starting message.
 	internal: some respond() declarations.
 	version: djbdns 1.05.
+20010313
+	patch: to dump and reload the cache

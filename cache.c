@@ -1,3 +1,11 @@
+#ifdef DUMPCACHE
+#include <stdio.h>
+#include <unistd.h>
+#include "env.h"
+#include "error.h"
+#include "open.h"
+#include "openreadclose.h"
+#endif
 #include "alloc.h"
 #include "byte.h"
 #include "uint32.h"
@@ -205,3 +213,97 @@ int cache_init(unsigned int cachesize)
 
   return 1;
 }
+
+#ifdef DUMPCACHE
+static int fd;
+
+static int cache_writeline(const char *buf, unsigned int len)
+{
+  int w;
+
+  while (len) {
+    w = write(fd,buf,len);
+    if (w == -1) {
+      if (errno == error_intr) continue;
+      close(fd);
+      return -1;
+    }
+    buf += w;
+    len -= w;
+  }
+  return 0;
+}
+
+int cache_dump(void)
+{
+  static char *fn;
+  static char *fntmp;
+  uint32 pos;
+  unsigned int len;
+
+  fn = env_get("DUMPCACHE");
+  if (!fn) return 999;
+  fntmp = env_get("DUMPCACHETMP");
+  if (!fntmp) return 999;
+  fd = open_trunc(fntmp);
+  if (fd == -1) return -1;
+
+  pos = oldest;
+  while (pos < unused) {
+    len = get4(pos + 4) + get4(pos + 8) + 16;
+    if (cache_writeline(x + pos + 4, len)) return -1;
+    pos += 4 + len;
+  }
+  pos = hsize;
+  while (pos < writer) {
+    len = get4(pos + 4) + get4(pos + 8) + 16;
+    if (cache_writeline(x + pos + 4, len)) return -1;
+    pos += 4 + len;
+  }
+
+  if (fsync(fd) == -1) return -1;
+  if (close(fd) == -1) return -1;
+  if (rename(fntmp,fn) == -1) return -1;
+  return 0;
+}
+
+int cache_slurp(const char *fn)
+{
+  static stralloc buf = {0};
+  char *p;
+  uint32 pos;
+  unsigned int len;
+  uint32 keylen;
+  uint32 datalen;
+  struct tai now;
+  struct tai expire;
+  int nb;
+
+  if (openreadclose(fn,&buf,16384) != 1) goto DIE;
+  tai_now(&now);
+  p = buf.s;
+  pos = 0;
+  len = buf.len;
+  nb = 0;
+  while (pos + 16 <= len) {
+    uint32_unpack(p + pos, &keylen);
+    uint32_unpack(p + pos + 4, &datalen);
+    tai_unpack(p + pos + 8, &expire);
+    pos += 16;
+    if (pos + keylen + datalen > len) break; /* missing data */
+    if (!tai_less(&expire,&now)) {
+      tai_sub(&expire,&expire,&now);
+      cache_set(p + pos, keylen, p + pos + keylen, datalen, (unsigned int)expire.x);
+    }
+    pos += keylen + datalen;
+    nb++;
+  }
+  alloc_free(buf.s); buf.s = 0;
+  return nb;
+
+ DIE:
+  alloc_free(buf.s); buf.s = 0;
+  if (errno == error_noent) return 0;
+  return -1;
+}
+#endif

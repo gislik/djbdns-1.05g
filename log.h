@@ -4,6 +4,10 @@
 #include "uint64.h"
 
 extern void log_startup(void);
+#ifdef DUMPCACHE
+extern void log_slurp(int);
+extern void log_dump(int);
+#endif
 
 extern void log_query(uint64 *,const char *,unsigned int,const char *,const char *,const char *);
 extern void log_querydrop(uint64 *);

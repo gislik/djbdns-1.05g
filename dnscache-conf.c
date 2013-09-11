@@ -32,6 +32,10 @@ char *dir;
 char *user;
 char *loguser;
 struct passwd *pw;
+#ifdef DUMPCACHE
+int useruid;
+int usergid;
+#endif
 const char *myip;
 
 uint32 seed[32];
@@ -81,6 +85,14 @@ int main(int argc,char **argv)
   myip = argv[4];
   if (!myip) myip = "127.0.0.1";
 
+#ifdef DUMPCACHE
+  pw = getpwnam(user);
+  seed_addtime();
+  if (!pw)
+    strerr_die3x(111,FATAL,"unknown account ",user);
+  useruid = pw->pw_uid;
+  usergid = pw->pw_gid;
+#endif
   pw = getpwnam(loguser);
   seed_addtime();
   if (!pw)
@@ -120,6 +132,14 @@ int main(int argc,char **argv)
   seed_addtime(); perm(0644);
   seed_addtime(); start("env/DATALIMIT"); outs("3000000\n"); finish();
   seed_addtime(); perm(0644);
+#ifdef DUMPCACHE
+  seed_addtime(); start("env/SLURPCACHE"); outs("dump/slurpcache\n"); finish();
+  seed_addtime(); perm(0644);
+  seed_addtime(); start("env/DUMPCACHE"); outs("dump/dumpcache\n"); finish();
+  seed_addtime(); perm(0644);
+  seed_addtime(); start("env/DUMPCACHETMP"); outs("dump/dumpcache.tmp\n"); finish();
+  seed_addtime(); perm(0644);
+#endif
   seed_addtime(); start("run");
   outs("#!/bin/sh\nexec 2>&1\nexec <seed\nexec envdir ./env sh -c '\n  exec envuidgid "); outs(user);
   outs(" softlimit -o250 -d \"$DATALIMIT\" ");
@@ -131,6 +151,11 @@ int main(int argc,char **argv)
   seed_addtime(); perm(0755);
   seed_addtime(); makedir("root");
   seed_addtime(); perm(02755);
+#ifdef DUMPCACHE
+  seed_addtime(); makedir("root/dump");
+  seed_addtime(); owner(useruid,usergid);
+  seed_addtime(); perm(02755);
+#endif
   seed_addtime(); makedir("root/ip");
   seed_addtime(); perm(02755);
   seed_addtime(); start("root/ip/127.0.0.1"); finish();
