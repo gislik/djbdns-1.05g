@@ -157,8 +157,8 @@ uint32.h uint64.h env.h error.h open.h openreadclose.h
 	./compile cache.c
 
 cachetest: \
-load cachetest.o cache.o libtai.a buffer.a alloc.a unix.a byte.a env.a
-	./load cachetest cache.o libtai.a buffer.a alloc.a unix.a env.a \
+load cachetest.o cache.o libtai.a buffer.a unix.a alloc.a byte.a env.a
+	./load cachetest cache.o libtai.a buffer.a unix.a alloc.a env.a \
 	byte.a dns.a
 
 cachetest.o: \
