@@ -208,7 +208,7 @@ static int doit(struct query *z,int state)
 
 
   NEWNAME:
-  if (++z->loop == 100) goto DIE;
+  if (++z->loop == QUERY_MAXLOOP) goto DIE;
   d = z->name[z->level];
   dtype = z->level ? DNS_T_A : z->type;
   dlen = dns_domain_length(d);
@@ -479,7 +479,7 @@ static int doit(struct query *z,int state)
 
 
   HAVEPACKET:
-  if (++z->loop == 100) goto DIE;
+  if (++z->loop == QUERY_MAXLOOP) goto DIE;
   buf = z->qm->dt.packet;
   len = z->qm->dt.packetlen;
 
