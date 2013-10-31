@@ -487,8 +487,6 @@ int main()
 
   if (env_get("HIDETTL"))
     response_hidettl();
-  if (env_get("FORWARDONLY"))
-    query_forwardonly();
 
   if (!roots_init())
     strerr_die2sys(111,FATAL,"unable to read servers: ");

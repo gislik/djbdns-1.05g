@@ -15,13 +15,6 @@
 
 extern stralloc ignoreip;
 
-static int flagforwardonly = 0;
-
-void query_forwardonly(void)
-{
-  flagforwardonly = 1;
-}
-
 static void cachegeneric(const char type[2],const char *d,const char *data,unsigned int datalen,uint32 ttl)
 {
   unsigned int len;
@@ -412,30 +405,31 @@ static int doit(struct query *z,int state)
       }
     }
     if (flagexact || roots(z->servers[z->level],d)) {
+      recflag(&z->isrecursive[z->level],d) ;
       for (j = 0;j < QUERY_MAXNS;++j)
         dns_domain_free(&z->ns[z->level][j]);
       z->control[z->level] = d;
       break;
     }
 
-    if (!flagforwardonly && (z->level < 2))
+    if (!z->isrecursive[z->level] && (z->level < 2))
       if (dlen < 255) {
         byte_copy(key,2,DNS_T_NS);
         byte_copy(key + 2,dlen,d);
         case_lowerb(key + 2,dlen);
         cached = cache_get(key,dlen + 2,&cachedlen,&ttl);
         if (cached && cachedlen) {
-	  z->control[z->level] = d;
+          z->control[z->level] = d;
           byte_zero(z->servers[z->level],64);
           for (j = 0;j < QUERY_MAXNS;++j)
             dns_domain_free(&z->ns[z->level][j]);
           pos = 0;
           j = 0;
           while (pos = dns_packet_getname(cached,cachedlen,pos,&t1)) {
-	    log_cachedns(d,t1);
+            log_cachedns(d,t1);
             if (j < QUERY_MAXNS)
               if (!dns_domain_copy(&z->ns[z->level][j++],t1)) goto DIE;
-	  }
+          }
           break;
         }
       }
@@ -466,7 +460,7 @@ static int doit(struct query *z,int state)
 
   dns_sortip(z->servers[z->level],64);
   dtype = z->level ? DNS_T_A : z->type;
-  if (qmerge_start(&z->qm,z->servers[z->level],flagforwardonly,z->name[z->level],dtype,z->localip,z->control[z->level]) == -1) goto DIE;
+  if (qmerge_start(&z->qm,z->servers[z->level],z->isrecursive[z->level],z->name[z->level],dtype,z->localip,z->control[z->level]) == -1) goto DIE;
   return 0;
 
 
