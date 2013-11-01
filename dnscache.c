@@ -25,6 +25,7 @@
 #include "droproot.h"
 #include "sig.h"
 #include "maxclient.h"
+#include "openreadclose.h"
 
 stralloc ignoreip = {0};
 

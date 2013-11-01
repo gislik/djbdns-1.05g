@@ -1,5 +1,6 @@
 #include "alloc.h"
 #include "dns.h"
+#include "stralloc.h"
 
 int dns_domain_prepend(char **out, const char *a, const char *b, unsigned int n) {
   static stralloc sa;

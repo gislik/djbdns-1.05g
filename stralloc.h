@@ -14,7 +14,9 @@ extern int stralloc_cats(stralloc *,const char *);
 extern int stralloc_copyb(stralloc *,const char *,unsigned int);
 extern int stralloc_catb(stralloc *,const char *,unsigned int);
 extern int stralloc_append(stralloc *,const char *); /* beware: this takes a pointer to 1 char */
+extern int stralloc_prependb(stralloc *, const char *, const unsigned int);
 extern int stralloc_starts(stralloc *,const char *);
+extern void stralloc_free(stralloc *sa);
 
 #define stralloc_0(sa) stralloc_append(sa,"")
 
