@@ -28,6 +28,7 @@
 #include "openreadclose.h"
 
 stralloc ignoreip = {0};
+uint32 minttl = 0;
 
 static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])
 {
@@ -455,6 +456,15 @@ int main()
       strerr_die4sys(111,FATAL,"unable to slurp cache ",x," : ");
     else
       log_slurp(nb);
+  }
+#endif
+#ifdef MINTTL
+  x = env_get("MINTTL");
+  if (x) {
+    unsigned long ttl;
+    if (!scan_ulong(x,&ttl))
+      strerr_die3x(111,FATAL,"unable to parse $MINTTL=",x);
+    minttl = ttl;
   }
 #endif
 
