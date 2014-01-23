@@ -14,6 +14,9 @@
 #include "query.h"
 
 extern stralloc ignoreip;
+#ifdef MINTTL
+extern uint32 minttl;
+#endif
 
 static void cachegeneric(const char type[2],const char *d,const char *data,unsigned int datalen,uint32 ttl)
 {
@@ -67,6 +70,9 @@ static uint32 ttlget(char buf[4])
   uint32_unpack_big(buf,&ttl);
   if (ttl > 1000000000) return 0;
   if (ttl > 604800) return 604800;
+#ifdef MINTTL
+  if(ttl < minttl) ttl = minttl;
+#endif
   return ttl;
 }
 
