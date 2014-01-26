@@ -28,7 +28,9 @@
 #include "openreadclose.h"
 
 stralloc ignoreip = {0};
+#ifdef MINTTL
 uint32 mincachettl = 0;
+#endif
 
 static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])
 {
