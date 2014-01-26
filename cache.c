@@ -13,6 +13,9 @@
 #include "tai.h"
 #include "cache.h"
 #include "dns.h"
+#ifdef MINTTL
+extern uint32 mincachettl;
+#endif
 uint64 cache_motion = 0;
 
 static char *x = 0;
@@ -146,6 +149,9 @@ void cache_set(const char *key,unsigned int keylen,const char *data,unsigned int
 
   if (!ttl) return;
   if (ttl > 604800) ttl = 604800;
+#ifdef MINTTL
+  if (ttl < mincachettl) ttl = mincachettl;
+#endif
 
   entrylen = keylen + datalen + 20;
 

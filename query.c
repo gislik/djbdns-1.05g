@@ -14,9 +14,7 @@
 #include "query.h"
 
 extern stralloc ignoreip;
-#ifdef MINTTL
-extern uint32 minttl;
-#endif
+extern uint32 mincachettl;
 
 static void cachegeneric(const char type[2],const char *d,const char *data,unsigned int datalen,uint32 ttl)
 {
@@ -70,9 +68,6 @@ static uint32 ttlget(char buf[4])
   uint32_unpack_big(buf,&ttl);
   if (ttl > 1000000000) return 0;
   if (ttl > 604800) return 604800;
-#ifdef MINTTL
-  if(ttl < minttl) ttl = minttl;
-#endif
   return ttl;
 }
 
@@ -782,6 +777,9 @@ static int doit(struct query *z,int state)
       pos = dns_packet_getname(buf,len,pos,&t1); if (!pos) goto DIE;
       pos = dns_packet_copy(buf,len,pos,header,10); if (!pos) goto DIE;
       ttl = ttlget(header + 4);
+#ifdef MINTTL
+      if (ttl < mincachettl) ttl = mincachettl;
+#endif
       uint16_unpack_big(header + 8,&datalen);
       if (dns_domain_equal(t1,d))
         if (byte_equal(header + 2,2,DNS_C_IN)) /* should always be true */
