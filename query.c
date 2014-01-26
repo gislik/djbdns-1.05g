@@ -14,7 +14,9 @@
 #include "query.h"
 
 extern stralloc ignoreip;
+#ifdef MINTTL
 extern uint32 mincachettl;
+#endif
 
 static void cachegeneric(const char type[2],const char *d,const char *data,unsigned int datalen,uint32 ttl)
 {
