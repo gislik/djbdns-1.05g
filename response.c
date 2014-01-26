@@ -3,6 +3,14 @@
 #include "uint16.h"
 #include "response.h"
 
+#ifdef MINTTL
+uint32 minttl = 0;
+void response_minttl(uint32 ttl)
+{
+  minttl = ttl;
+}
+#endif
+
 char response[65535];
 unsigned int response_len = 0; /* <= 65535 */
 static unsigned int tctarget;
@@ -77,6 +85,9 @@ int response_rstart(const char *d,const char type[2],uint32 ttl)
   if (!response_addbytes(type,2)) return 0;
   if (!response_addbytes(DNS_C_IN,2)) return 0;
   if (flaghidettl) ttl = 0;
+#ifdef MINTTL
+  if (ttl < minttl) ttl = minttl;
+#endif
   uint32_pack_big(ttlstr,ttl);
   if (!response_addbytes(ttlstr,4)) return 0;
   if (!response_addbytes("\0\0",2)) return 0;

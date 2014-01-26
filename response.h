@@ -6,6 +6,10 @@
 extern char response[];
 extern unsigned int response_len;
 
+#ifdef MINTTL
+extern void response_minttl(uint32);
+#endif
+
 extern int response_query(const char *,const char *,const char *);
 extern void response_nxdomain(void);
 extern void response_servfail(void);

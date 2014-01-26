@@ -3,6 +3,10 @@
 #include "cache.h"
 #include "str.h"
 
+#ifdef MINTTL
+uint32 mincachettl = 0;
+#endif
+
 int main(int argc,char **argv)
 {
   int i;
