@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "error.h"
 #include "roots.h"
 #include "log.h"
@@ -87,6 +88,8 @@ static void cleanup(struct query *z)
     for (k = 0;k < QUERY_MAXNS;++k)
       dns_domain_free(&z->ns[j][k]);
   }
+  z->country[0] = 0;
+  z->country[1] = 0;
 }
 
 static int rqa(struct query *z)
@@ -184,7 +187,9 @@ static int doit(struct query *z,int state)
   int flagreferral;
   int flagsoa;
   int flagexact;
+  int flagcountry = 0;
   char *ed = 0; 
+  char *cd = 0; 
   uint32 ttl;
   uint32 soattl;
   uint32 cnamettl;
@@ -195,6 +200,11 @@ static int doit(struct query *z,int state)
   int q;
   unsigned int ii;
 
+  if (z->country == 0)
+    cache_prefix_reset();
+  else
+    cache_prefix_set(z->country);
+
   errno = error_io;
   if (state == 1) goto HAVEPACKET;
   if (state == -1) {
@@ -202,6 +212,7 @@ static int doit(struct query *z,int state)
     goto SERVFAIL;
   }
 
+  printf("country: %c%c\n", z->country[0], z->country[1]);
 
   NEWNAME:
   if (++z->loop == QUERY_MAXLOOP) goto DIE;
@@ -242,6 +253,15 @@ static int doit(struct query *z,int state)
   }
 
   if (dlen <= 255) {
+    if (z->country != 0) {
+        if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
+        if (!dns_domain_prepend(&cd, cd, z->country, 2)) goto DIE;
+        if (roots(z->servers[z->level], cd)) {
+            flagcountry = 1;
+            cache_prefix_set(z->country);
+        }
+    }
+
     byte_copy(key,2,DNS_T_ANY);
     byte_copy(key + 2,dlen,d);
     case_lowerb(key + 2,dlen);
@@ -400,14 +420,25 @@ static int doit(struct query *z,int state)
 
   flagexact = -1;
   for (;;) {
-    if (flagexact < 0) { 
-      flagexact = 0;
-      if(typematch(DNS_T_A, dtype)) { 
+    if (flagcountry == 0) {
+      if (flagexact < 0) { 
+        flagexact = 0;
+        /* if(typematch(DNS_T_A, dtype)) {  */
         if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
         if (roots(z->servers[z->level], ed)) flagexact = 1;
+        /* } */
+      }
+      if (flagexact == 0 && z->country != 0) {
+        if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
+        if (!dns_domain_prepend(&cd, cd, z->country, 2)) goto DIE;
+        if (roots(z->servers[z->level], cd)) {
+            flagcountry = 1;
+            cache_prefix_set(z->country);
+        }
+
       }
     }
-    if (flagexact || roots(z->servers[z->level],d)) {
+    if (flagexact || flagcountry || roots(z->servers[z->level],d)) {
       recflag(&z->isrecursive[z->level],d) ;
       for (j = 0;j < QUERY_MAXNS;++j)
         dns_domain_free(&z->ns[z->level][j]);
@@ -443,6 +474,7 @@ static int doit(struct query *z,int state)
     d += j;
   }
 
+  
 
   HAVENS:
   for (j = 0;j < QUERY_MAXNS;++j)
@@ -860,7 +892,7 @@ static int doit(struct query *z,int state)
   return -1;
 }
 
-int query_start(struct query *z,char *dn,char type[2],char class[2],char localip[4])
+int query_start(struct query *z,char *dn,char type[2],char class[2],char localip[4],char *country)
 {
   if (byte_equal(type,2,DNS_T_AXFR)) { errno = error_perm; return -1; }
 
@@ -872,6 +904,8 @@ int query_start(struct query *z,char *dn,char type[2],char class[2],char localip
   byte_copy(z->type,2,type);
   byte_copy(z->class,2,class);
   byte_copy(z->localip,4,localip);
+  if (country != 0)
+    byte_copy(z->country,2,country);
 
   return doit(z,0);
 }

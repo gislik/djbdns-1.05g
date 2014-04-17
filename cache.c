@@ -24,6 +24,7 @@ static uint32 hsize;
 static uint32 writer;
 static uint32 oldest;
 static uint32 unused;
+static char *cache_prefix = 0;
 
 /*
 100 <= size <= 1000000000.
@@ -88,7 +89,7 @@ static unsigned int hash(const char *key,unsigned int keylen)
   return result;
 }
 
-char *cache_get(const char *key,unsigned int keylen,unsigned int *datalen,uint32 *ttl)
+char *cache_get(const char *k,unsigned int keylen,unsigned int *datalen,uint32 *ttl)
 {
   struct tai expire;
   struct tai now;
@@ -101,6 +102,16 @@ char *cache_get(const char *key,unsigned int keylen,unsigned int *datalen,uint32
 
   if (!x) return 0;
   if (keylen > MAXKEYLEN) return 0;
+
+  char key[259];
+  if (cache_prefix == 0) {
+    byte_copy(key, keylen, k);
+  } else {
+    byte_copy(key,2, cache_prefix);
+    byte_copy(key+2, keylen, k);
+    keylen += 2;
+  } 
+  /* cache_prefix_reset(); */
 
   prevpos = hash(key,keylen);
   pos = get4(prevpos);
@@ -135,7 +146,7 @@ char *cache_get(const char *key,unsigned int keylen,unsigned int *datalen,uint32
   return 0;
 }
 
-void cache_set(const char *key,unsigned int keylen,const char *data,unsigned int datalen,uint32 ttl)
+void cache_set(const char *k,unsigned int keylen,const char *data,unsigned int datalen,uint32 ttl)
 {
   struct tai now;
   struct tai expire;
@@ -145,6 +156,17 @@ void cache_set(const char *key,unsigned int keylen,const char *data,unsigned int
 
   if (!x) return;
   if (keylen > MAXKEYLEN) return;
+
+  char key[259];
+  if (cache_prefix == 0) {
+    byte_copy(key, keylen, k);
+  } else {
+    byte_copy(key, 2, cache_prefix);
+    byte_copy(key+2, keylen, k);
+    keylen += 2;
+  }
+  /* cache_prefix_reset(); */
+
   if (datalen > MAXDATALEN) return;
 
   if (!ttl) return;
@@ -312,4 +334,20 @@ int cache_slurp(const char *fn)
   if (errno == error_noent) return 0;
   return -1;
 }
+
+inline void cache_prefix_set(char *prefix)
+{
+  cache_prefix = prefix;
+}
+
+inline void cache_prefix_reset()
+{
+  cache_prefix = NULL;
+}
+
+inline char *cache_prefix_get()
+{
+  return cache_prefix;
+}
+
 #endif

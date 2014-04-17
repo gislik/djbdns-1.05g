@@ -12,5 +12,7 @@ extern char *cache_get(const char *,unsigned int,unsigned int *,uint32 *);
 extern int cache_dump(void);
 extern int cache_slurp(const char *);
 #endif
-
+extern void cache_prefix_set(char *);
+extern void cache_prefix_reset();
+extern char *cache_prefix_get();
 #endif

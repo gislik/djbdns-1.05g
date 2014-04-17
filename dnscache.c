@@ -101,6 +101,12 @@ void u_new(void)
   char qtype[2];
   char qclass[2];
 
+  char countrybuf[] = "uk";
+  char *country = 0;
+  static int countrycnt = 0;
+
+  if (++countrycnt % 2) country = countrybuf;
+
   for (j = 0;j < MAXUDP;++j)
     if (!u[j].active)
       break;
@@ -127,7 +133,8 @@ void u_new(void)
 
   x->active = ++numqueries; ++uactive;
   log_query(&x->active,x->ip,x->port,x->id,q,qtype);
-  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing)) {
+
+  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing, country)) {
     case -1:
       u_drop(j);
       return;
@@ -261,7 +268,7 @@ void t_rw(int j)
 
   x->active = ++numqueries;
   log_query(&x->active,x->ip,x->port,x->id,q,qtype);
-  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing)) {
+  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing,x->ip)) {
     case -1:
       t_drop(j);
       return;

@@ -23,9 +23,10 @@ struct query {
   char type[2];
   char class[2];
   struct qmerge *qm;
+  char country[2];
 } ;
 
-extern int query_start(struct query *,char *,char *,char *,char *);
+extern int query_start(struct query *,char *,char *,char *,char *,char *);
 extern void query_io(struct query *,iopause_fd *,struct taia *);
 extern int query_get(struct query *,iopause_fd *,struct taia *);
 
