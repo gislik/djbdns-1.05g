@@ -23,7 +23,7 @@ struct query {
   char type[2];
   char class[2];
   struct qmerge *qm;
-  char country[2];
+  char cacheprefix[2];
 } ;
 
 extern int query_start(struct query *,char *,char *,char *,char *,char *);

@@ -105,17 +105,8 @@ void u_new(void)
   char qtype[2];
   char qclass[2];
 
-  /* char country[3]; */
   char *country;
   char ipstr[IP4_FMT];
-
-  /* byte_zero(country, 3); */
-  /* char countrybuf[] = "uk"; */
-  /* char *country = 0; */
-  /* static int countrycnt = 0; */
-
-  /* if (++countrycnt % 2) country = countrybuf; */
-
 
   for (j = 0;j < MAXUDP;++j)
     if (!u[j].active)
@@ -144,7 +135,6 @@ void u_new(void)
   x->active = ++numqueries; ++uactive;
   log_query(&x->active,x->ip,x->port,x->id,q,qtype);
 
-  /* char ipstr[] = "162.243.30.200"; */
   len = ip4_fmt(ipstr, x->ip);
   ipstr[len] = 0;
 

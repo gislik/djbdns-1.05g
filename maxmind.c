@@ -7,8 +7,10 @@
 #include "error.h"
 #include "exit.h"
 
+#define COUNTRYLEN 3
+
 MMDB_s mmdb;
-char country[3];
+char country[COUNTRYLEN];
 int exit_code = 0;
 
   // TODO:
@@ -18,7 +20,7 @@ void maxmind_free();
 
 void maxmind_init() {
   printf("maxmind v%s\n", MMDB_lib_version()); 
-  byte_zero(country, 3);
+  byte_zero(country, COUNTRYLEN);
   char fname[] = "GeoLite2-Country.mmdb";
   int status = MMDB_open(fname, MMDB_MODE_MMAP, &mmdb);
   if (status != MMDB_SUCCESS) {
@@ -34,7 +36,7 @@ void maxmind_init() {
 
 char *maxmind_lookup(char *ipstr) {
   int gai_error, mmdb_error;
-  byte_zero(country, 3);
+  byte_zero(country, COUNTRYLEN);
   MMDB_lookup_result_s result = MMDB_lookup_string(&mmdb, ipstr, &gai_error, &mmdb_error);
 
   if (gai_error != 0) 
@@ -54,7 +56,7 @@ char *maxmind_lookup(char *ipstr) {
     } else if (entry.has_data) {
       /* printf("data_size: %d\n", entry.data_size); */
       if (entry.type == MMDB_DATA_TYPE_UTF8_STRING) {
-        byte_zero(country, 3);
+        byte_zero(country, COUNTRYLEN);
         byte_copy(country, 2, entry.utf8_string);
         printf("country  %s\n", country); 
       }

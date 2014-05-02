@@ -13,6 +13,7 @@
 #include "tai.h"
 #include "cache.h"
 #include "dns.h"
+#define CACHEPREFIXLEN 2
 #ifdef MINTTL
 extern uint32 mincachettl;
 #endif
@@ -24,7 +25,7 @@ static uint32 hsize;
 static uint32 writer;
 static uint32 oldest;
 static uint32 unused;
-static char *cache_prefix = 0;
+static char *cacheprefix = 0;
 
 /*
 100 <= size <= 1000000000.
@@ -104,14 +105,13 @@ char *cache_get(const char *k,unsigned int keylen,unsigned int *datalen,uint32 *
   if (keylen > MAXKEYLEN) return 0;
 
   char key[259];
-  if (cache_prefix == 0) {
+  if (cacheprefix == 0) {
     byte_copy(key, keylen, k);
   } else {
-    byte_copy(key,2, cache_prefix);
-    byte_copy(key+2, keylen, k);
-    keylen += 2;
+    byte_copy(key, CACHEPREFIXLEN, cacheprefix);
+    byte_copy(key+CACHEPREFIXLEN, keylen, k);
+    keylen += CACHEPREFIXLEN;
   } 
-  /* cache_prefix_reset(); */
 
   prevpos = hash(key,keylen);
   pos = get4(prevpos);
@@ -158,14 +158,13 @@ void cache_set(const char *k,unsigned int keylen,const char *data,unsigned int d
   if (keylen > MAXKEYLEN) return;
 
   char key[259];
-  if (cache_prefix == 0) {
+  if (cacheprefix == 0) {
     byte_copy(key, keylen, k);
   } else {
-    byte_copy(key, 2, cache_prefix);
-    byte_copy(key+2, keylen, k);
-    keylen += 2;
+    byte_copy(key, CACHEPREFIXLEN, cacheprefix);
+    byte_copy(key+CACHEPREFIXLEN, keylen, k);
+    keylen += CACHEPREFIXLEN;
   }
-  /* cache_prefix_reset(); */
 
   if (datalen > MAXDATALEN) return;
 
@@ -337,17 +336,17 @@ int cache_slurp(const char *fn)
 
 inline void cache_prefix_set(char *prefix)
 {
-  cache_prefix = prefix;
+  cacheprefix = prefix;
 }
 
 inline void cache_prefix_reset()
 {
-  cache_prefix = NULL;
+  cacheprefix = NULL;
 }
 
 inline char *cache_prefix_get()
 {
-  return cache_prefix;
+  return cacheprefix;
 }
 
 #endif
