@@ -202,6 +202,14 @@ void log_cachednxdomain(const char *dn)
   line();
 }
 
+void log_cacheprefix(const char *p)
+{
+    string("cache prefix "); 
+    // CACHEPREFIXLEN
+    buffer_put(buffer_2, p, 2);
+    line();
+}
+
 void log_nxdomain(const char server[4],const char *q,unsigned int ttl)
 {
   string("nxdomain "); ip(server); space(); number(ttl); space();

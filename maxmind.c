@@ -19,7 +19,8 @@ int exit_code = 0;
 void maxmind_free();
 
 void maxmind_init() {
-  printf("maxmind v%s\n", MMDB_lib_version()); 
+  setlinebuf(stderr);
+  fprintf(stderr, "maxmind v%s\n", MMDB_lib_version()); 
   byte_zero(country, COUNTRYLEN);
   char fname[] = "GeoLite2-Country.mmdb";
   int status = MMDB_open(fname, MMDB_MODE_MMAP, &mmdb);

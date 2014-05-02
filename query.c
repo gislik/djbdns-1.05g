@@ -212,7 +212,7 @@ static int doit(struct query *z,int state)
     goto SERVFAIL;
   }
 
-  printf("cacheprefix: %c%c\n", z->cacheprefix[0], z->cacheprefix[1]);
+  log_cacheprefix(z->cacheprefix);
 
   NEWNAME:
   if (++z->loop == QUERY_MAXLOOP) goto DIE;
