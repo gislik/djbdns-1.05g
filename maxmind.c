@@ -13,9 +13,6 @@ MMDB_s mmdb;
 char country[COUNTRYLEN];
 int exit_code = 0;
 
-  // TODO:
-    // - optimise query.c for for IS$ files
-
 void maxmind_free();
 
 void maxmind_init() {
@@ -27,9 +24,8 @@ void maxmind_init() {
   if (status != MMDB_SUCCESS) {
     fprintf(stderr, "maxmind: can't open %s - %s\n", fname, MMDB_strerror(status));
 
-    if (status == MMDB_IO_ERROR) {
+    if (status == MMDB_IO_ERROR) 
         fprintf(stderr, "maxmind: IO error: %s\n", strerror(errno));
-    }
     exit_code = status;
     maxmind_free();
   }
@@ -53,13 +49,10 @@ char *maxmind_lookup(char *ipstr) {
     if (status != MMDB_SUCCESS) {
         fprintf( stderr, "maxmind: got an error looking up the entry data - %s\n", MMDB_strerror(status));
         exit_code = 4;
-        /* goto end; */
     } else if (entry.has_data) {
-      /* printf("data_size: %d\n", entry.data_size); */
       if (entry.type == MMDB_DATA_TYPE_UTF8_STRING) {
         byte_zero(country, COUNTRYLEN);
         byte_copy(country, 2, entry.utf8_string);
-        printf("country  %s\n", country); 
       }
     }
   } else {
