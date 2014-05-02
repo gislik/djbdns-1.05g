@@ -330,13 +330,17 @@ compile dns_txt.c stralloc.h gen_alloc.h uint16.h byte.h dns.h \
 stralloc.h iopause.h taia.h tai.h uint64.h taia.h
 	./compile dns_txt.c
 
+maxmind.o: \
+compile maxmind.c maxmind.h byte.h exit.h
+	./compile maxmind.c 
+
 dnscache: \
 load dnscache.o droproot.o okclient.o log.o cache.o query.o qmerge.o \
-response.o dd.o roots.o iopause.o prot.o dns.a env.a alloc.a buffer.a \
-libtai.a unix.a byte.a sig.a socket.lib
+response.o dd.o roots.o iopause.o prot.o maxmind.o dns.a env.a alloc.a \
+buffer.a libtai.a unix.a byte.a sig.a socket.lib
 	./load dnscache droproot.o okclient.o log.o cache.o \
-	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o dns.a \
-	env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a `cat \
+	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o maxmind.o \
+	dns.a env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a `cat \
 	socket.lib`
 
 dnscache-conf: \

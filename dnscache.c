@@ -1,4 +1,3 @@
-#include <maxminddb.h>
 #include <unistd.h>
 #include <signal.h>
 #include "env.h"
@@ -28,12 +27,14 @@
 #include "maxclient.h"
 #include "openreadclose.h"
 
+#ifdef MAXMIND
+#include "maxmind.h"
+#endif
+
 stralloc ignoreip = {0};
 #ifdef MINTTL
 uint32 mincachettl = 0;
 #endif
-
-MMDB_s mmdb;
 
 static int packetquery(char *buf,unsigned int len,char **q,char qtype[2],char qclass[2],char id[2])
 {
@@ -104,17 +105,17 @@ void u_new(void)
   char qtype[2];
   char qclass[2];
 
-  char country[3];
+  /* char country[3]; */
+  char *country;
   char ipstr[IP4_FMT];
 
-  byte_zero(country, 3);
+  /* byte_zero(country, 3); */
   /* char countrybuf[] = "uk"; */
   /* char *country = 0; */
   /* static int countrycnt = 0; */
 
   /* if (++countrycnt % 2) country = countrybuf; */
 
-  /* printf("version: %s\n", MMDB_lib_version()); */
 
   for (j = 0;j < MAXUDP;++j)
     if (!u[j].active)
@@ -146,53 +147,8 @@ void u_new(void)
   /* char ipstr[] = "162.243.30.200"; */
   len = ip4_fmt(ipstr, x->ip);
   ipstr[len] = 0;
-  int gai_error, mmdb_error;
-  MMDB_lookup_result_s result = MMDB_lookup_string(&mmdb, ipstr, &gai_error, &mmdb_error);
 
-  if (0 != gai_error) {
-    fprintf(stderr, "Error from getaddrinfo for %s - %s\n", ipstr, gai_strerror(gai_error));
-      /* exit(2); */
-    /* return 2; */
-  }
-
-  if (MMDB_SUCCESS != mmdb_error) {
-    fprintf(stderr, "Got an error from libmaxminddb: %s\n", MMDB_strerror(mmdb_error));
-      /* exit(3); */
-    /* return 3; */
-  }
-
-  /* MMDB_entry_data_list_s *entry_data_list = NULL; */
-
-  int exit_code = 0;
-  if (result.found_entry) {
-    /* int status = MMDB_get_entry_data_list(&result.entry, &entry_data_list); */
-    MMDB_entry_data_s entry;
-    int status = MMDB_get_value(&result.entry, &entry, "country", "iso_code", NULL);
-
-    if (MMDB_SUCCESS != status) {
-        fprintf( stderr, "Got an error looking up the entry data - %s\n", MMDB_strerror(status));
-        exit_code = 4;
-        /* goto end; */
-    }
-
-    if (entry.has_data) {
-      printf("data_size: %d\n", entry.data_size);
-      if (entry.type == MMDB_DATA_TYPE_UTF8_STRING) {
-        byte_zero(country, 3);
-        byte_copy(country, 2, entry.utf8_string);
-        printf("Country: %s\n", country); 
-      }
-    }
-    /* if (NULL != entry_data_list) { */
-        /* MMDB_dump_entry_data_list(stdout, entry_data_list, 2); */
-    /* } */
-    
-  } else {
-    fprintf( stderr, "No entry for this IP address (%s) was found\n", ipstr);
-    exit_code = 5;
-  }
-
-
+  country = maxmind_lookup(ipstr);
 
   switch(query_start(&x->q,q,qtype,qclass,myipoutgoing, country)) {
     case -1:
@@ -580,26 +536,17 @@ int main()
   if (socket_listen(tcp53,20) == -1)
     strerr_die2sys(111,FATAL,"unable to listen on TCP socket: ");
 
+#ifdef MAXMIND
+  maxmind_init();
+#endif
+
 #ifdef DUMPCACHE
   sig_catch(sig_alarm,do_dump);
 #endif
 
-  char fname[] = "GeoLite2-Country.mmdb";
-  int status = MMDB_open(fname, MMDB_MODE_MMAP, &mmdb);
-  if (status != MMDB_SUCCESS) {
-    fprintf(stderr, "\n  Can't open %s - %s\n", fname, MMDB_strerror(status));
-
-    if (status == MMDB_IO_ERROR) {
-        /* fprintf(stderr, "    IO error: %s\n", strerror(errno)); */
-    }
-    /* exit(1); */
-  }
-
   log_startup();
   doit();
-/* end: */
-    /* MMDB_free_entry_data_list(entry_data_list); */
-    MMDB_close(&mmdb);
-    /* exit(exit_code); */
-    /* return exit_code; */
+#ifdef MAXMIND
+  maxmind_free();
+#endif
 }
