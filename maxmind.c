@@ -8,7 +8,7 @@
 #include "strerr.h"
 #include "exit.h"
 
-#define COUNTRYLEN 3
+#define COUNTRYLEN 2
 #define FATAL "maxmind fatal: "
 #define WARNING "maxmind warning: "
 
@@ -32,7 +32,7 @@ void maxmind_init(char *geoipdb) {
 }
 
 char *maxmind_lookup(char *ipstr) {
-  int gai_error, mmdb_error;
+  int gai_error, mmdb_error, status;
   MMDB_entry_data_s entry;
 
   byte_zero(country, COUNTRYLEN);
@@ -45,7 +45,7 @@ char *maxmind_lookup(char *ipstr) {
     strerr_warn3(WARNING, "got an error from libmaxminddb: ", MMDB_strerror(mmdb_error), 0);
 
   if (result.found_entry) {
-    int status = MMDB_get_value(&result.entry, &entry, "country", "iso_code", NULL);
+    status = MMDB_get_value(&result.entry, &entry, "country", "iso_code", NULL);
 
     if (status != MMDB_SUCCESS) {
         strerr_warn3(WARNING, "got an error looking up the entry data - ", MMDB_strerror(status), 0);
@@ -53,13 +53,13 @@ char *maxmind_lookup(char *ipstr) {
       if (entry.type == MMDB_DATA_TYPE_UTF8_STRING) {
         byte_zero(country, COUNTRYLEN);
         byte_copy(country, 2, entry.utf8_string);
+        return country;
       }
     }
   } else {
     strerr_warn4(WARNING, "no entry for this ip address ", ipstr, " was found", 0);
   }
-
-  return country;
+  return NULL;
 }
 
 void maxmind_free() {
