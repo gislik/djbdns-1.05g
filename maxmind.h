@@ -1,7 +1,7 @@
 #ifndef MAXMIND_H
 #define MAXMIND_H
 
-extern void maxmind_init();
+extern void maxmind_init(char *);
 
 extern char *maxmind_lookup(char *);
 

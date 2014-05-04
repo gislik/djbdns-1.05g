@@ -38,6 +38,9 @@ extern void log_rrmx(const char *,const char *,const char *,const char *,unsigne
 extern void log_rrsoa(const char *,const char *,const char *,const char *,const char *,unsigned int);
 
 extern void log_stats(void);
+#ifdef MAXMIND
+extern void log_maxmind(char *);
+#endif
 
 
 #endif

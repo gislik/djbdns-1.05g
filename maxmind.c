@@ -5,50 +5,50 @@
 #include "maxmind.h"
 #include "byte.h"
 #include "error.h"
+#include "strerr.h"
 #include "exit.h"
 
 #define COUNTRYLEN 3
+#define FATAL "maxmind fatal: "
+#define WARNING "maxmind warning: "
 
 MMDB_s mmdb;
 char country[COUNTRYLEN];
-int exit_code = 0;
 
 void maxmind_free();
 
-void maxmind_init() {
+void maxmind_init(char *geoipdb) {
   setlinebuf(stderr);
   fprintf(stderr, "maxmind v%s\n", MMDB_lib_version()); 
   byte_zero(country, COUNTRYLEN);
-  char fname[] = "GeoLite2-Country.mmdb";
-  int status = MMDB_open(fname, MMDB_MODE_MMAP, &mmdb);
+  int status = MMDB_open(geoipdb, MMDB_MODE_MMAP, &mmdb);
   if (status != MMDB_SUCCESS) {
-    fprintf(stderr, "maxmind: can't open %s - %s\n", fname, MMDB_strerror(status));
+    strerr_die5x(111, FATAL, "can't open ", geoipdb, " - ", MMDB_strerror(status));
 
     if (status == MMDB_IO_ERROR) 
-        fprintf(stderr, "maxmind: IO error: %s\n", strerror(errno));
-    exit_code = status;
-    maxmind_free();
+        strerr_die3x(111, FATAL, "io error ", strerror(errno));
+    _exit(111);
   }
 }
 
 char *maxmind_lookup(char *ipstr) {
   int gai_error, mmdb_error;
+  MMDB_entry_data_s entry;
+
   byte_zero(country, COUNTRYLEN);
   MMDB_lookup_result_s result = MMDB_lookup_string(&mmdb, ipstr, &gai_error, &mmdb_error);
 
   if (gai_error != 0) 
-    fprintf(stderr, "maxmind: error from getaddrinfo for %s - %s\n", ipstr, gai_strerror(gai_error));
+    strerr_warn5(WARNING, "error from getaddrinfo for ", ipstr, " - ", gai_strerror(gai_error), 0);
 
   if (mmdb_error != MMDB_SUCCESS) 
-    fprintf(stderr, "maxmind: got an error from libmaxminddb: %s\n", MMDB_strerror(mmdb_error));
+    strerr_warn3(WARNING, "got an error from libmaxminddb: ", MMDB_strerror(mmdb_error), 0);
 
   if (result.found_entry) {
-    MMDB_entry_data_s entry;
     int status = MMDB_get_value(&result.entry, &entry, "country", "iso_code", NULL);
 
     if (status != MMDB_SUCCESS) {
-        fprintf( stderr, "maxmind: got an error looking up the entry data - %s\n", MMDB_strerror(status));
-        exit_code = 4;
+        strerr_warn3(WARNING, "got an error looking up the entry data - ", MMDB_strerror(status), 0);
     } else if (entry.has_data) {
       if (entry.type == MMDB_DATA_TYPE_UTF8_STRING) {
         byte_zero(country, COUNTRYLEN);
@@ -56,8 +56,7 @@ char *maxmind_lookup(char *ipstr) {
       }
     }
   } else {
-    fprintf( stderr, "maxmind: no entry for this ip address (%s) was found\n", ipstr);
-    exit_code = 5;
+    strerr_warn4(WARNING, "no entry for this ip address ", ipstr, " was found", 0);
   }
 
   return country;
@@ -65,6 +64,5 @@ char *maxmind_lookup(char *ipstr) {
 
 void maxmind_free() {
     MMDB_close(&mmdb);
-    _exit(exit_code);
 }
 #endif

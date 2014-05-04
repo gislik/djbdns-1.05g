@@ -321,3 +321,6 @@ void log_stats(void)
   number(tactive);
   line();
 }
+
+#ifdef MAXMIND
+#endif

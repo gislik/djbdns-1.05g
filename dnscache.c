@@ -527,7 +527,11 @@ int main()
     strerr_die2sys(111,FATAL,"unable to listen on TCP socket: ");
 
 #ifdef MAXMIND
-  maxmind_init();
+  x = env_get("GEOIP");
+  if (!x)
+    strerr_die2x(111,FATAL,"$GEOIP not set");
+
+  maxmind_init(x);
 #endif
 
 #ifdef DUMPCACHE
