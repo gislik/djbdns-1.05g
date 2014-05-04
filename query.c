@@ -88,8 +88,7 @@ static void cleanup(struct query *z)
     for (k = 0;k < QUERY_MAXNS;++k)
       dns_domain_free(&z->ns[j][k]);
   }
-  z->cacheprefix[0] = 0;
-  z->cacheprefix[1] = 0;
+  byte_zero(z->cacheprefix, QUERY_CACHEPREFIXLEN);
 }
 
 static int rqa(struct query *z)
@@ -158,7 +157,7 @@ static int smaller(char *buf,unsigned int len,unsigned int pos1,unsigned int pos
   return 0;
 }
 
-static int doit(struct query *z,int state)
+static int doit(struct query *z,int state, char *cacheprefix)
 {
   char key[257];
   char *cached;
@@ -200,10 +199,12 @@ static int doit(struct query *z,int state)
   int q;
   unsigned int ii;
 
-  if (z->cacheprefix == 0)
+  if (*z->cacheprefix == 0) {
     cache_prefix_reset();
-  else
+  } else {
     cache_prefix_set(z->cacheprefix);
+    log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
+  }
 
   errno = error_io;
   if (state == 1) goto HAVEPACKET;
@@ -211,8 +212,6 @@ static int doit(struct query *z,int state)
     log_servfail(z->name[z->level]);
     goto SERVFAIL;
   }
-
-  log_cacheprefix(z->cacheprefix);
 
   NEWNAME:
   if (++z->loop == QUERY_MAXLOOP) goto DIE;
@@ -253,14 +252,14 @@ static int doit(struct query *z,int state)
   }
 
   if (dlen <= 255) {
-    if (z->cacheprefix != 0) {
-        if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
-        if (!dns_domain_prepend(&cd, cd, z->cacheprefix, 2)) goto DIE;
-        if (roots(z->servers[z->level], cd)) {
-            flagcacheprefix = 1;
-            cache_prefix_set(z->cacheprefix);
-        }
-    }
+    // if (z->cacheprefix != 0) {
+        // if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
+        // if (!dns_domain_prepend(&cd, cd, z->cacheprefix, 2)) goto DIE;
+        // if (roots(z->servers[z->level], cd)) {
+            // flagcacheprefix = 1;
+            // cache_prefix_set(z->cacheprefix);
+        // }
+    // }
 
     byte_copy(key,2,DNS_T_ANY);
     byte_copy(key + 2,dlen,d);
@@ -294,6 +293,7 @@ static int doit(struct query *z,int state)
 	if (!rqa(z)) goto DIE;
 	pos = 0;
 	while (pos = dns_packet_getname(cached,cachedlen,pos,&t2)) {
+
 	  if (!response_rstart(d,DNS_T_NS,ttl)) goto DIE;
 	  if (!response_addname(t2)) goto DIE;
 	  response_rfinish(RESPONSE_ANSWER);
@@ -420,22 +420,20 @@ static int doit(struct query *z,int state)
 
   flagexact = -1;
   for (;;) {
-    if (flagcacheprefix == 0) {
-      if (flagexact < 0) { 
-        flagexact = 0;
-        /* if(typematch(DNS_T_A, dtype)) {  */
-        if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
-        if (roots(z->servers[z->level], ed)) flagexact = 1;
-        /* } */
-      }
-      if (flagexact == 0 && z->cacheprefix != 0) {
-        if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
-        if (!dns_domain_prepend(&cd, cd, z->cacheprefix, 2)) goto DIE;
-        if (roots(z->servers[z->level], cd)) {
-            flagcacheprefix = 1;
-            cache_prefix_set(z->cacheprefix);
-        }
-
+    if (flagexact < 0) { 
+      flagexact = 0;
+      /* if(typematch(DNS_T_A, dtype)) {  */
+      if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
+      if (roots(z->servers[z->level], ed)) flagexact = 1;
+      /* } */
+    }
+    if (!flagexact && !*z->cacheprefix && cacheprefix) {
+      if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
+      if (!dns_domain_prepend(&cd, cd, cacheprefix, 2)) goto DIE;
+      if (roots(z->servers[z->level], cd)) {
+          flagcacheprefix = 1;
+          byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
+          cache_prefix_set(z->cacheprefix);
       }
     }
     if (flagexact || flagcacheprefix || roots(z->servers[z->level],d)) {
@@ -899,24 +897,23 @@ int query_start(struct query *z,char *dn,char type[2],char class[2],char localip
   cleanup(z);
   z->level = 0;
   z->loop = 0;
+  byte_zero(z->cacheprefix, QUERY_CACHEPREFIXLEN);
 
   if (!dns_domain_copy(&z->name[0],dn)) return -1;
   byte_copy(z->type,2,type);
   byte_copy(z->class,2,class);
   byte_copy(z->localip,4,localip);
-  if (cacheprefix != 0)
-    byte_copy(z->cacheprefix,2,cacheprefix);
 
-  return doit(z,0);
+  return doit(z,0, cacheprefix);
 }
 
 int query_get(struct query *z,iopause_fd *x,struct taia *stamp)
 {
   switch(qmerge_get(&z->qm,x,stamp)) {
     case 1:
-      return doit(z,1);
+      return doit(z,1, 0);
     case -1:
-      return doit(z,-1);
+      return doit(z,-1, 0);
   }
   return 0;
 }

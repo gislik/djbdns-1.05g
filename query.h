@@ -8,6 +8,7 @@
 #define QUERY_MAXALIAS 16
 #define QUERY_MAXNS 16
 #define QUERY_MAXLOOP 200
+#define QUERY_CACHEPREFIXLEN 2
 
 struct query {
   unsigned int loop;
@@ -23,7 +24,7 @@ struct query {
   char type[2];
   char class[2];
   struct qmerge *qm;
-  char cacheprefix[2];
+  char cacheprefix[QUERY_CACHEPREFIXLEN];
 } ;
 
 extern int query_start(struct query *,char *,char *,char *,char *,char *);
