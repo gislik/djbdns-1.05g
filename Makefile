@@ -585,6 +585,7 @@ warn-auto.sh conf-ld
 	echo 'main="$$1"; shift'; \
 	echo exec "`head -1 conf-ld`" \
 	'-o "$$main" "$$main".o $${1+"$$@"}' \
+	'-lmaxminddb' \
 	) > load
 	chmod 755 load
 
