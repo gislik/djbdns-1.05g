@@ -202,11 +202,10 @@ void log_cachednxdomain(const char *dn)
   line();
 }
 
-void log_cacheprefix(const char *p)
+void log_cacheprefix(const char *p, unsigned int len)
 {
     string("cache prefix "); 
-    // CACHEPREFIXLEN
-    buffer_put(buffer_2, p, 2);
+    buffer_put(buffer_2, p, len);
     line();
 }
 
