@@ -188,7 +188,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int flagexact;
   int flagcacheprefix = 0;
   char *ed = 0; 
-  char *cd = 0; 
+  // char *cd = 0; 
   uint32 ttl;
   uint32 soattl;
   uint32 cnamettl;
@@ -199,12 +199,8 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int q;
   unsigned int ii;
 
-  if (*z->cacheprefix == 0) {
-    cache_prefix_reset();
-  } else {
-    cache_prefix_set(z->cacheprefix);
-    log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
-  }
+  setlinebuf(stdout);
+  printf("prefix: %s\n", z->cacheprefix);
 
   errno = error_io;
   if (state == 1) goto HAVEPACKET;
@@ -251,16 +247,16 @@ static int doit(struct query *z,int state, char *cacheprefix)
     return 1;
   }
 
-  if (dlen <= 255) {
-    // if (z->cacheprefix != 0) {
-        // if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
-        // if (!dns_domain_prepend(&cd, cd, z->cacheprefix, 2)) goto DIE;
-        // if (roots(z->servers[z->level], cd)) {
-            // flagcacheprefix = 1;
-            // cache_prefix_set(z->cacheprefix);
-        // }
-    // }
+  if (cacheprefix && roots2(z->servers[z->level], d, cacheprefix)) {
+    flagcacheprefix = 1;
+    byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
+    log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
+    cache_prefix_set(z->cacheprefix);
+  } else {
+    cache_prefix_reset();
+  }
 
+  if (dlen <= 255) {
     byte_copy(key,2,DNS_T_ANY);
     byte_copy(key + 2,dlen,d);
     case_lowerb(key + 2,dlen);
@@ -424,17 +420,12 @@ static int doit(struct query *z,int state, char *cacheprefix)
       flagexact = 0;
       /* if(typematch(DNS_T_A, dtype)) {  */
       if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
-      if (roots(z->servers[z->level], ed)) flagexact = 1;
-      /* } */
-    }
-    if (!flagexact && !*z->cacheprefix && cacheprefix) {
-      if (!dns_domain_prepend(&cd, d, "$", 1)) goto DIE;
-      if (!dns_domain_prepend(&cd, cd, cacheprefix, 2)) goto DIE;
-      if (roots(z->servers[z->level], cd)) {
-          flagcacheprefix = 1;
-          byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
-          cache_prefix_set(z->cacheprefix);
+      if (roots(z->servers[z->level], ed)) {
+        flagexact = 1;
+        byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
+        cache_prefix_set(z->cacheprefix);
       }
+      /* } */
     }
     if (flagexact || flagcacheprefix || roots(z->servers[z->level],d)) {
       recflag(&z->isrecursive[z->level],d) ;
@@ -514,6 +505,11 @@ static int doit(struct query *z,int state, char *cacheprefix)
   control = z->control[z->level];
   d = z->name[z->level];
   dtype = z->level ? DNS_T_A : z->type;
+
+  if (*z->cacheprefix)
+    cache_prefix_set(z->cacheprefix);
+  else
+    cache_prefix_reset();
 
   pos = dns_packet_copy(buf,len,0,header,12); if (!pos) goto DIE;
   pos = dns_packet_skipname(buf,len,pos); if (!pos) goto DIE;
