@@ -185,7 +185,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int flagcname;
   int flagreferral;
   int flagsoa;
-  int flagexact;
+  int flagexact = 0;
   int flagcacheprefix = 0;
   char *ed = 0; 
   // char *cd = 0; 
@@ -198,9 +198,6 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int p;
   int q;
   unsigned int ii;
-
-  setlinebuf(stdout);
-  printf("prefix: %s\n", z->cacheprefix);
 
   errno = error_io;
   if (state == 1) goto HAVEPACKET;
@@ -247,13 +244,22 @@ static int doit(struct query *z,int state, char *cacheprefix)
     return 1;
   }
 
-  if (cacheprefix && roots2(z->servers[z->level], d, cacheprefix)) {
-    flagcacheprefix = 1;
-    byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
-    log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
+  if (*z->cacheprefix) {
     cache_prefix_set(z->cacheprefix);
   } else {
-    cache_prefix_reset();
+    if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
+    if (roots(z->servers[z->level], ed)) {
+      flagexact = 1;
+      byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
+      cache_prefix_set(z->cacheprefix);
+    } else if (cacheprefix && roots2(z->servers[z->level], d, cacheprefix)) {
+      flagcacheprefix = 1;
+      byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
+      log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
+      cache_prefix_set(z->cacheprefix);
+    } else {
+      cache_prefix_reset();
+    }
   }
 
   if (dlen <= 255) {
@@ -414,19 +420,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
     }
   }
 
-  flagexact = -1;
   for (;;) {
-    if (flagexact < 0) { 
-      flagexact = 0;
-      /* if(typematch(DNS_T_A, dtype)) {  */
-      if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
-      if (roots(z->servers[z->level], ed)) {
-        flagexact = 1;
-        byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
-        cache_prefix_set(z->cacheprefix);
-      }
-      /* } */
-    }
     if (flagexact || flagcacheprefix || roots(z->servers[z->level],d)) {
       recflag(&z->isrecursive[z->level],d) ;
       for (j = 0;j < QUERY_MAXNS;++j)
