@@ -10,12 +10,12 @@ alloc.a: \
 makelib alloc.o alloc_re.o getln.o getln2.o stralloc_cat.o \
 stralloc_catb.o stralloc_cats.o stralloc_copy.o stralloc_eady.o \
 stralloc_num.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
-stralloc_ppnb.o stralloc_ppnd.o stralloc_ppns.o stralloc_free.o
+stralloc_ppnb.o stralloc_ppnd.o stralloc_ppns.o 
 	./makelib alloc.a alloc.o alloc_re.o getln.o getln2.o \
 	stralloc_cat.o stralloc_catb.o stralloc_cats.o \
 	stralloc_copy.o stralloc_eady.o stralloc_num.o \
 	stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
-	stralloc_ppnb.o stralloc_ppns.o stralloc_ppnd.o stralloc_free.o
+	stralloc_ppnb.o stralloc_ppns.o stralloc_ppnd.o 
 
 alloc.o: \
 compile alloc.c alloc.h error.h
@@ -904,11 +904,6 @@ stralloc_pend.o: \
 compile stralloc_pend.c alloc.h stralloc.h gen_alloc.h \
 gen_allocdefs.h
 	./compile stralloc_pend.c
-
-stralloc_free.o: \
-compile stralloc_free.c alloc.h stralloc.h gen_alloc.h \
-gen_allocdefs.h
-	./compile stralloc_free.c
 
 stralloc_ppnb.o: \
 compile stralloc_ppnb.c alloc.h stralloc.h gen_alloc.h byte.h \
