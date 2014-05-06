@@ -337,10 +337,10 @@ compile maxmind.c maxmind.h byte.h exit.h
 dnscache: \
 load dnscache.o droproot.o okclient.o log.o cache.o query.o qmerge.o \
 response.o dd.o roots.o iopause.o prot.o maxmind.o dns.a env.a alloc.a \
-buffer.a libtai.a unix.a byte.a sig.a libmaxminddb.a socket.lib
+buffer.a libtai.a unix.a byte.a sig.a socket.lib
 	./load dnscache droproot.o okclient.o log.o cache.o \
 	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o maxmind.o \
-	dns.a env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a libmaxminddb.a `cat \
+	dns.a env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a `cat \
 	socket.lib`
 
 dnscache-conf: \
