@@ -247,12 +247,17 @@ static int doit(struct query *z,int state, char *cacheprefix)
   if (*z->cacheprefix) {
     cache_prefix_set(z->cacheprefix);
   } else {
-    if (!dns_domain_prepends(&ed, "=", d)) goto DIE;
+    if (!dns_domain_prepends(&ed, d, "=")) goto DIE;
     if (roots(z->servers[z->level], &z->isrecursive[z->level], ed)) {
       flagexact = 1;
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
     } else if (cacheprefix && roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix)) {
+      static stralloc sa;
+      stralloc_copyb(&sa, "", 0);
+      dns_domain_todot_cat(&sa, d);
+      setlinebuf(stdout);
+      printf("%s (%d)\n", sa.s, z->isrecursive[z->level]);
       flagcacheprefix = 1;
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
       log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);

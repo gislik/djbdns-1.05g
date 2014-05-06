@@ -59,7 +59,7 @@ static int roots_search(char *q, char *prefix)
 static int recflag(int *isrecursive,char *q,char *prefix)
 {
   int r;
-  if (prefix) dns_domain_prepends(&q, q, prefix);
+  if (prefix) dns_domain_prepends2(&q, q, "$", prefix);
   r = roots_find(q);
   if (r == -1) return 0;
   *isrecursive=!!recursive.s[r];
