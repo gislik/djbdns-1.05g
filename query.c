@@ -247,7 +247,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
   if (*z->cacheprefix) {
     cache_prefix_set(z->cacheprefix);
   } else {
-    if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
+    if (!dns_domain_prepends(&ed, "=", d)) goto DIE;
     if (roots(z->servers[z->level], ed)) {
       flagexact = 1;
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
