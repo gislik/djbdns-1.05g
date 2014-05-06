@@ -72,6 +72,7 @@ int roots2(char servers[64], int *isrecursive, char *q,char *prefix)
   r = roots_search(q, prefix);
   if (r == -1) return 0;
   s = recflag(isrecursive, q, prefix);
+  if (s == 0) return 0;
   byte_copy(servers,64,data.s + r);
   return 1;
 }
