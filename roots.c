@@ -56,30 +56,34 @@ static int roots_search(char *q, char *prefix)
   }
 }
 
-int roots2(char servers[64],char *q,char *prefix) 
+static int recflag(int *isrecursive,char *q,char *prefix)
 {
   int r;
-  r = roots_search(q, prefix);
-  if (r == -1) return 0;
-  byte_copy(servers,64,data.s + r);
-  return 1;
-}
-
-int roots(char servers[64],char *q)
-{
-  int r;
-  r = roots_find(q);
-  if (r == -1) return 0;
-  byte_copy(servers,64,data.s + r);
-  return 1;
-}
-
-int recflag(int *isrecursive,char *q)
-{
-  int r;
+  if (prefix) dns_domain_prepends(&q, q, prefix);
   r = roots_find(q);
   if (r == -1) return 0;
   *isrecursive=!!recursive.s[r];
+  return 1;
+}
+
+int roots2(char servers[64], int *isrecursive, char *q,char *prefix) 
+{
+  int r, s;
+  r = roots_search(q, prefix);
+  if (r == -1) return 0;
+  s = recflag(isrecursive, q, prefix);
+  byte_copy(servers,64,data.s + r);
+  return 1;
+}
+
+int roots(char servers[64], int *isrecursive, char *q)
+{
+  int r, s;
+  r = roots_find(q);
+  if (r == -1) return 0;
+  s = recflag(isrecursive, q, 0); 
+  if (s == 0) return 0;
+  byte_copy(servers,64,data.s + r);
   return 1;
 }
 

@@ -248,11 +248,11 @@ static int doit(struct query *z,int state, char *cacheprefix)
     cache_prefix_set(z->cacheprefix);
   } else {
     if (!dns_domain_prepends(&ed, "=", d)) goto DIE;
-    if (roots(z->servers[z->level], ed)) {
+    if (roots(z->servers[z->level], &z->isrecursive[z->level], ed)) {
       flagexact = 1;
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
-    } else if (cacheprefix && roots2(z->servers[z->level], d, cacheprefix)) {
+    } else if (cacheprefix && roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix)) {
       flagcacheprefix = 1;
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
       log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
@@ -421,8 +421,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
   }
 
   for (;;) {
-    if (flagexact || flagcacheprefix || roots(z->servers[z->level],d)) {
-      recflag(&z->isrecursive[z->level],d) ;
+    if (flagexact || flagcacheprefix || roots(z->servers[z->level],&z->isrecursive[z->level],d)) {
       for (j = 0;j < QUERY_MAXNS;++j)
         dns_domain_free(&z->ns[z->level][j]);
       z->control[z->level] = d;
