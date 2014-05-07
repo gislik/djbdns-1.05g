@@ -490,20 +490,6 @@ int main()
     }
   ignoreip.len = j;
 
-  if (openreadclose("ignoreip",&ignoreip,64) < 0) 
-    strerr_die2x(111,FATAL,"trouble reading ignoreip");
-  for(j = k = i = 0; i < ignoreip.len; i++)
-    if (ignoreip.s[i] == '\n')  {
-      ignoreip.s[i] = '\0';
-      if (j + 4 > i)
-        strerr_die3x(111,FATAL,"badly malformed ip4 address ",ignoreip.s+k);
-      if (!ip4_scan(ignoreip.s+k,ignoreip.s+j))
-        strerr_die3x(111,FATAL,"unable to parse address in ignoreip ",ignoreip.s+k);
-      j += 4;
-      k = i + 1;
-    }
-  ignoreip.len = j;
-
   if (env_get("HIDETTL"))
     response_hidettl();
 
