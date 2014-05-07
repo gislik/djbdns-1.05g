@@ -114,6 +114,17 @@ void log_dump(int err)
 }
 #endif
 
+#ifdef MAXMIND
+void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id[2],const char *q,const char qtype[2], const char *country)
+{
+  string("query "); number(*qnum); space();
+  ip(client); string(":"); hex(port >> 8); hex(port & 255);
+  string(":"); logid(id); space();
+  logtype(qtype); space(); name(q);
+  space(); string(country);
+  line();
+}
+#else
 void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id[2],const char *q,const char qtype[2])
 {
   string("query "); number(*qnum); space();
@@ -122,6 +133,7 @@ void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id
   logtype(qtype); space(); name(q);
   line();
 }
+#endif
 
 void log_querydone(uint64 *qnum,unsigned int len)
 {

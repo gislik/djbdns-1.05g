@@ -133,12 +133,17 @@ void u_new(void)
   if (!packetquery(buf,len,&q,qtype,qclass,x->id)) return;
 
   x->active = ++numqueries; ++uactive;
-  log_query(&x->active,x->ip,x->port,x->id,q,qtype);
 
   len = ip4_fmt(ipstr, x->ip);
   ipstr[len] = 0;
 
   country = maxmind_lookup(ipstr);
+
+#ifdef MAXMIND
+  log_query(&x->active,x->ip,x->port,x->id,q,qtype, country);
+#else
+  log_query(&x->active,x->ip,x->port,x->id,q,qtype);
+#endif
 
   switch(query_start(&x->q,q,qtype,qclass,myipoutgoing, country)) {
     case -1:
@@ -231,7 +236,10 @@ void t_rw(int j)
   static char *q = 0;
   char qtype[2];
   char qclass[2];
+  char *country;
+  char ipstr[IP4_FMT];
   int r;
+  int len;
 
   x = t + j;
   if (x->state == -1) {
@@ -273,7 +281,16 @@ void t_rw(int j)
   if (!packetquery(x->buf,x->len,&q,qtype,qclass,x->id)) { t_close(j); return; }
 
   x->active = ++numqueries;
+
+  len = ip4_fmt(ipstr, x->ip);
+  ipstr[len] = 0;
+
+  country = maxmind_lookup(ipstr);
+#ifdef MAXMIND
+  log_query(&x->active,x->ip,x->port,x->id,q,qtype, country);
+#else
   log_query(&x->active,x->ip,x->port,x->id,q,qtype);
+#endif
   switch(query_start(&x->q,q,qtype,qclass,myipoutgoing,x->ip)) {
     case -1:
       t_drop(j);
