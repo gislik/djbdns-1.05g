@@ -253,14 +253,17 @@ static int doit(struct query *z,int state, char *cacheprefix)
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
     } else if (cacheprefix && roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix)) {
-      if (byte_diff(z->servers[z->level], 4, "\0\0\0\0")) {
+      if (byte_diff(z->servers[z->level], 4, "\0\0\0\0")) 
         flagcacheprefix = 1;
-        byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
-        log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
-        cache_prefix_set(z->cacheprefix);
-      } else {
-        cache_prefix_reset();
+      else {
+        if (!*d) goto DIE;
+        j = 1 + (unsigned int)  *d;
+        dlen -= j;
+        d += j;
       }
+      byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
+      log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
+      cache_prefix_set(z->cacheprefix);
     } else {
       cache_prefix_reset();
     }
