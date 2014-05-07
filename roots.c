@@ -34,21 +34,17 @@ static int roots_find(char *q)
 static int roots_search(char *q, char *prefix)
 {
   int r;
-  char *q1;
+  char *p = 0;
   static stralloc sa;
 
   for (;;) {
     if (prefix) {
       if (!*q) return -1;
-      q1 = 0;
-      if (!stralloc_copyb(&sa, prefix, 2)) return -1;
-      if (!stralloc_catb(&sa, "$", 1)) return -1;
-      if (!dns_domain_todot_cat(&sa, q)) return -1;
-      if (!dns_domain_fromdot(&q1, sa.s, sa.len)) return -1;
+      if (!dns_domain_prepends2(&p, q, prefix, "$")) return -1;
     } else {
-      q1 = q;
+      p = q;
     }
-    r = roots_find(q1);
+    r = roots_find(p);
     if (r >= 0) return r;
     if (!*q) return -1; /* user misconfiguration */
     q += *q;
@@ -59,8 +55,10 @@ static int roots_search(char *q, char *prefix)
 static int recflag(int *isrecursive,char *q,char *prefix)
 {
   int r;
-  if (prefix) dns_domain_prepends2(&q, q, "$", prefix);
-  r = roots_find(q);
+  char *p = 0;
+  if (prefix) { if (!dns_domain_prepends2(&p, q, prefix, "$")) return 0; }
+  else p = q;
+  r = roots_find(p);
   if (r == -1) return 0;
   *isrecursive=!!recursive.s[r];
   return 1;

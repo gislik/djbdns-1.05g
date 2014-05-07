@@ -6,7 +6,7 @@
 int dns_domain_prependb2(char **out, const char *d, const char *s1, unsigned int n1, const char *s2, unsigned int n2) {
   static stralloc sa;
   if (!stralloc_copyb(&sa, s1, n1)) return 0;
-  if (s2 && n2) if (!stralloc_copyb(&sa, s2, n2)) return 0;
+  if (s2 && n2) if (!stralloc_catb(&sa, s2, n2)) return 0;
   if (!dns_domain_todot_cat(&sa, d)) return 0;
   if (!dns_domain_fromdot(out, sa.s, sa.len)) return 0;
   return 1;
