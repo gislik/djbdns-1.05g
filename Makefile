@@ -232,11 +232,13 @@ choose compile trydrent.c direntry.h1 direntry.h2
 dns.a: \
 makelib dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_mx.o \
 dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
-dns_resolve.o dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o dns_dpnd.o 
+dns_resolve.o dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o \
+dns_dpnd.o dns_dwlk.o
 	./makelib dns.a dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
 	dns_ipq.o dns_mx.o dns_name.o dns_nd.o dns_packet.o \
 	dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
-	dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o dns_dpnd.o
+	dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o \
+	dns_dpnd.o dns_dwlk.o
 
 dns_dfd.o: \
 compile dns_dfd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
@@ -247,6 +249,10 @@ dns_dpnd.o: \
 compile dns_dpnd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
 iopause.h taia.h tai.h uint64.h taia.h
 	./compile dns_dpnd.c
+
+dns_dwlk.o: \
+compile dns_dwlk.c
+	./compile dns_dwlk.c
 
 dns_domain.o: \
 compile dns_domain.c error.h alloc.h case.h byte.h dns.h stralloc.h \
