@@ -172,7 +172,6 @@ static int doit(struct query *z,int state, char *cacheprefix)
   uint16 numanswers;
   unsigned int posauthority;
   uint16 numauthority;
-  unsigned int posglue;
   uint16 numglue;
   unsigned int pos;
   unsigned int pos2;
@@ -253,14 +252,8 @@ static int doit(struct query *z,int state, char *cacheprefix)
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
     } else if (cacheprefix && roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix)) {
-      if (byte_diff(z->servers[z->level], 4, "\0\0\0\0")) 
-        flagcacheprefix = 1;
-      else {
-        if (!*d) goto DIE;
-        j = 1 + (unsigned int) *d;
-        dlen -= j;
-        d += j;
-      }
+      if (byte_diff(z->servers[z->level], 4, "\0\0\0\0")) flagcacheprefix = 1;
+      else if (!dns_domain_walk(&d, &dlen)) goto DIE;
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
       log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
       cache_prefix_set(z->cacheprefix);
@@ -457,10 +450,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
         }
       }
 
-    if (!*d) goto DIE;
-    j = 1 + (unsigned int) (unsigned char) *d;
-    dlen -= j;
-    d += j;
+    if (!dns_domain_walk(&d, &dlen)) goto DIE;
   }
 
   
@@ -566,7 +556,6 @@ static int doit(struct query *z,int state, char *cacheprefix)
     uint16_unpack_big(header + 8,&datalen);
     pos += datalen;
   }
-  posglue = pos;
 
 
   if (!flagcname && !rcode && !flagout && flagreferral && !flagsoa)

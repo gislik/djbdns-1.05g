@@ -35,7 +35,6 @@ static int roots_search(char *q, char *prefix)
 {
   int r;
   char *p = 0;
-  static stralloc sa;
 
   for (;;) {
     if (prefix) {
