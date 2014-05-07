@@ -257,7 +257,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
         flagcacheprefix = 1;
       else {
         if (!*d) goto DIE;
-        j = 1 + (unsigned int)  *d;
+        j = 1 + (unsigned int) *d;
         dlen -= j;
         d += j;
       }
