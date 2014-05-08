@@ -120,8 +120,9 @@ void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id
   string("query "); number(*qnum); space();
   ip(client); string(":"); hex(port >> 8); hex(port & 255);
   string(":"); logid(id); space();
-  logtype(qtype); space(); name(q);
-  space(); string(country);
+  logtype(qtype); space(); name(q); space(); 
+  if (country) string(country);
+  else string("??");
   line();
 }
 #else
