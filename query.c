@@ -257,7 +257,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
         flagcacheprefix = roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix, &pd);
       if (flagcacheprefix) {
         byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
-        log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN);
+        /* log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN); */
         cache_prefix_set(z->cacheprefix);
       } else {
         cache_prefix_reset();
