@@ -97,7 +97,16 @@ int roots2(char servers[64], int *isrecursive, char *q,char *prefix, char **pd)
 
 int roots_same2(char *q1,char *q2, char *prefix)
 {
-  if (roots_search2(q1, prefix) == roots_search2(q2, prefix)) return 1;
+  int r1, r2;
+  do {
+    r1 = roots_search2(q1, prefix);
+    if (!dns_domain_walk(&q1, 0)) r1 = 0;
+  } while (r1 < 0);
+  do {
+    r2 = roots_search2(q2, prefix);
+    if (!dns_domain_walk(&q2, 0)) r2 = 0;
+  } while (r2 < 0);
+  if (r1 == r2) return 1;
   return roots_search(q1) == roots_search(q2);
 }
 
