@@ -31,63 +31,74 @@ static int roots_find(char *q)
   return -1;
 }
 
-static int roots_search(char *q, char *prefix)
+static int roots_search(char *q)
 {
   int r;
-  char *p = 0;
 
   for (;;) {
-    if (prefix) {
-      if (!*q) return -1;
-      if (!dns_domain_prepends2(&p, q, prefix, "$")) return -1;
-    } else {
-      p = q;
-    }
-    r = roots_find(p);
-    if (r >= 0) return r;
-    if (!*q) return -1; /* user misconfiguration */
-    q += *q;
-    q += 1;
+    r = roots_find(q);
+    if (r >= 0) 
+      return r;
+    if (!dns_domain_walk(&q, 0)) return -1; /* user misconfiguration */
   }
-}
-
-static int recflag(int *isrecursive,char *q,char *prefix)
-{
-  int r;
-  char *p = 0;
-  if (prefix) { if (!dns_domain_prepends2(&p, q, prefix, "$")) return 0; }
-  else p = q;
-  r = roots_find(p);
-  if (r == -1) return 0;
-  *isrecursive=!!recursive.s[r];
-  return 1;
-}
-
-int roots2(char servers[64], int *isrecursive, char *q,char *prefix) 
-{
-  int r, s;
-  r = roots_search(q, prefix);
-  if (r == -1) return 0;
-  s = recflag(isrecursive, q, prefix);
-  if (s == 0) return 0;
-  byte_copy(servers,64,data.s + r);
-  return 1;
 }
 
 int roots(char servers[64], int *isrecursive, char *q)
 {
-  int r, s;
+  int r;
   r = roots_find(q);
   if (r == -1) return 0;
-  s = recflag(isrecursive, q, 0); 
-  if (s == 0) return 0;
   byte_copy(servers,64,data.s + r);
+  *isrecursive = !!recursive.s[r];
   return 1;
 }
 
-int roots_same(char *q,char *q2)
+int roots_find2(char *q, char *prefix) 
 {
-  return roots_search(q, NULL) == roots_search(q2, NULL);
+  int r;
+  char *p = 0;
+  if (!q) return 0;
+  if (!dns_domain_prepends2(&p, q, prefix, "$")) return 0;
+  r = roots_find(p);
+  if (r >= 0) {
+    if (byte_equal(data.s + r, 4, "\0\0\0\0")) return -r;
+    return r;
+  }
+  return 0;
+}
+
+int roots_search2(char *q, char *prefix)
+{
+  int r;
+  for (;;) {
+    r = roots_find2(q, prefix);
+    if (r) return r;
+    if (!dns_domain_walk(&q, 0)) return 0;
+  }
+
+}
+
+int roots2(char servers[64], int *isrecursive, char *q,char *prefix, char **pd) 
+{
+  int r;
+  for (;;) {
+    r = roots_find2(q, prefix);
+    if (r > 0) {
+      if (servers) byte_copy(servers,64,data.s + r);
+      if (isrecursive) *isrecursive = !!recursive.s[r];
+      return 1;
+    } else if (r < 0) {
+      *pd = q;
+      return -1;
+    }
+    if (!dns_domain_walk(&q, 0)) return 0;
+  }
+}
+
+int roots_same2(char *q1,char *q2, char *prefix)
+{
+  if (roots_search2(q1, prefix) == roots_search2(q2, prefix)) return 1;
+  return roots_search(q1) == roots_search(q2);
 }
 
 static int init2(DIR *dir)
