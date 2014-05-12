@@ -199,8 +199,6 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int q;
   unsigned int ii;
 
-  setlinebuf(stdout);
-
   errno = error_io;
   if (state == 1) goto HAVEPACKET;
   if (state == -1) {
