@@ -13,6 +13,7 @@
 #define WARNING "maxmind warning: "
 
 MMDB_s mmdb;
+int mm_ready = 0;
 char country[COUNTRYLEN];
 
 void maxmind_free();
@@ -29,11 +30,15 @@ void maxmind_init(char *geoipdb) {
         strerr_die3x(111, FATAL, "io error ", strerror(errno));
     _exit(111);
   }
+  mm_ready = 1;
 }
 
 char *maxmind_lookup(char *ipstr) {
   int gai_error, mmdb_error, status;
   MMDB_entry_data_s entry;
+
+  if (mm_ready == 0)
+    return 0;
 
   byte_zero(country, COUNTRYLEN);
   MMDB_lookup_result_s result = MMDB_lookup_string(&mmdb, ipstr, &gai_error, &mmdb_error);
@@ -64,5 +69,6 @@ char *maxmind_lookup(char *ipstr) {
 
 void maxmind_free() {
     MMDB_close(&mmdb);
+    mm_ready = 0;
 }
 #endif

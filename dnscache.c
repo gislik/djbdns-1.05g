@@ -431,6 +431,7 @@ static void do_dump(void)
 #endif
 
 #define FATAL "dnscache: fatal: "
+#define WARNING "dnscache: warning: "
 
 char seed[128];
 
@@ -545,10 +546,12 @@ int main()
 
 #ifdef MAXMIND
   x = env_get("GEOIP");
-  if (!x)
-    strerr_die2x(111,FATAL,"$GEOIP not set");
+  if (x)
+    maxmind_init(x);
+  else
+    /* strerr_die2x(111,FATAL,"$GEOIP not set"); */
+    strerr_warn2(WARNING,"$GEOIP not set", 0);
 
-  maxmind_init(x);
 #endif
 
 #ifdef DUMPCACHE
