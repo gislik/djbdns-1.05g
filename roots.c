@@ -56,7 +56,7 @@ int roots(char servers[64], int *isrecursive, char *q)
 int roots_find2(char *q, char *prefix) 
 {
   int r;
-  char *p = 0;
+  static char *p = 0;
   if (!q) return 0;
   if (!dns_domain_prepends2(&p, q, prefix, "$")) return 0;
   r = roots_find(p);
