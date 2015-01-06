@@ -880,6 +880,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
 
 
   DIE:
+  printf("oops: %d\n", z->loop);
   cleanup(z);
   if (records) { alloc_free(records); records = 0; }
   return -1;
