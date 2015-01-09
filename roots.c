@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -78,7 +79,7 @@ int roots_search2(char *q, char *prefix)
 
 }
 
-int roots2(char servers[64], int *isrecursive, char *q,char *prefix, char **pd) 
+int roots2(char servers[64], int *isrecursive, char *q,char *prefix) 
 {
   int r;
   for (;;) {
@@ -88,7 +89,7 @@ int roots2(char servers[64], int *isrecursive, char *q,char *prefix, char **pd)
       if (isrecursive) *isrecursive = !!recursive.s[r];
       return 1;
     } else if (r < 0) {
-      *pd = q;
+      if (isrecursive) *isrecursive = !!recursive.s[r];
       return -1;
     }
     if (!dns_domain_walk(&q, 0)) return 0;

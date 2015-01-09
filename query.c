@@ -187,7 +187,6 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int flagexact = 0;
   int flagcacheprefix = 0;
   char *ed = 0; 
-  char *pd = 0;
   /* char *cd = 0;  */
   uint32 ttl;
   uint32 soattl;
@@ -254,7 +253,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
       cache_prefix_set(z->cacheprefix);
     } else {
       if (cacheprefix)
-        flagcacheprefix = roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix, &pd);
+        flagcacheprefix = roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix);
       if (flagcacheprefix) {
         byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
         /* log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN); */
