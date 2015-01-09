@@ -249,6 +249,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
     if (!dns_domain_prepends(&ed, d, "=")) goto DIE;
     if (roots(z->servers[z->level], &z->isrecursive[z->level], ed)) {
       flagexact = 1;
+      // TODO: Why is this not cache_prefix_reset?
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
     } else {
