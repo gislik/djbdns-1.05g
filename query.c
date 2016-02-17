@@ -187,9 +187,8 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int flagexact = 0;
   int flagdrop6 = 0;
   int flagcacheprefix = 0;
-  char *ed = 0; 
-  char *dd = 0; 
-  /* char *cd = 0;  */
+  static char *ed = 0; 
+  static char *dd = 0; 
   uint32 ttl;
   uint32 soattl;
   uint32 cnamettl;
