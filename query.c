@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "error.h"
 #include "roots.h"
 #include "log.h"
@@ -87,6 +88,7 @@ static void cleanup(struct query *z)
     for (k = 0;k < QUERY_MAXNS;++k)
       dns_domain_free(&z->ns[j][k]);
   }
+  byte_zero(z->cacheprefix, QUERY_CACHEPREFIXLEN);
 }
 
 static int rqa(struct query *z)
@@ -155,7 +157,7 @@ static int smaller(char *buf,unsigned int len,unsigned int pos1,unsigned int pos
   return 0;
 }
 
-static int doit(struct query *z,int state)
+static int doit(struct query *z,int state, char *cacheprefix)
 {
   char key[257];
   char *cached;
@@ -170,7 +172,6 @@ static int doit(struct query *z,int state)
   uint16 numanswers;
   unsigned int posauthority;
   uint16 numauthority;
-  unsigned int posglue;
   uint16 numglue;
   unsigned int pos;
   unsigned int pos2;
@@ -183,8 +184,10 @@ static int doit(struct query *z,int state)
   int flagcname;
   int flagreferral;
   int flagsoa;
-  int flagexact;
+  int flagexact = 0;
+  int flagcacheprefix = 0;
   char *ed = 0; 
+  /* char *cd = 0;  */
   uint32 ttl;
   uint32 soattl;
   uint32 cnamettl;
@@ -201,7 +204,6 @@ static int doit(struct query *z,int state)
     log_servfail(z->name[z->level]);
     goto SERVFAIL;
   }
-
 
   NEWNAME:
   if (++z->loop == QUERY_MAXLOOP) goto DIE;
@@ -241,6 +243,28 @@ static int doit(struct query *z,int state)
     return 1;
   }
 
+  if (*z->cacheprefix) {
+    cache_prefix_set(z->cacheprefix);
+  } else {
+    if (!dns_domain_prepends(&ed, d, "=")) goto DIE;
+    if (roots(z->servers[z->level], &z->isrecursive[z->level], ed)) {
+      flagexact = 1;
+      // TODO: Why is this not cache_prefix_reset?
+      byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
+      cache_prefix_set(z->cacheprefix);
+    } else {
+      if (cacheprefix)
+        flagcacheprefix = roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix);
+      if (flagcacheprefix) {
+        byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, cacheprefix);
+        /* log_cacheprefix(z->cacheprefix, QUERY_CACHEPREFIXLEN); */
+        cache_prefix_set(z->cacheprefix);
+      } else {
+        cache_prefix_reset();
+      }
+    }
+  }
+
   if (dlen <= 255) {
     byte_copy(key,2,DNS_T_ANY);
     byte_copy(key + 2,dlen,d);
@@ -274,6 +298,7 @@ static int doit(struct query *z,int state)
 	if (!rqa(z)) goto DIE;
 	pos = 0;
 	while (pos = dns_packet_getname(cached,cachedlen,pos,&t2)) {
+
 	  if (!response_rstart(d,DNS_T_NS,ttl)) goto DIE;
 	  if (!response_addname(t2)) goto DIE;
 	  response_rfinish(RESPONSE_ANSWER);
@@ -398,17 +423,15 @@ static int doit(struct query *z,int state)
     }
   }
 
-  flagexact = -1;
+  if (flagcacheprefix == -1)
+    if (!dns_domain_walk(&d, &dlen)) goto DIE;
+
   for (;;) {
-    if (flagexact < 0) { 
-      flagexact = 0;
-      if(typematch(DNS_T_A, dtype)) { 
-        if (!dns_domain_prepend(&ed, d, "=", 1)) goto DIE;
-        if (roots(z->servers[z->level], ed)) flagexact = 1;
-      }
-    }
-    if (flagexact || roots(z->servers[z->level],d)) {
-      recflag(&z->isrecursive[z->level],d) ;
+    if (flagcacheprefix == -1) {
+      if (roots_find2(d, cacheprefix) == 1)
+        flagcacheprefix = 1;
+    } 
+    if (flagexact || flagcacheprefix == 1 || roots(z->servers[z->level],&z->isrecursive[z->level],d)) {
       for (j = 0;j < QUERY_MAXNS;++j)
         dns_domain_free(&z->ns[z->level][j]);
       z->control[z->level] = d;
@@ -437,12 +460,10 @@ static int doit(struct query *z,int state)
         }
       }
 
-    if (!*d) goto DIE;
-    j = 1 + (unsigned int) (unsigned char) *d;
-    dlen -= j;
-    d += j;
+    if (!dns_domain_walk(&d, &dlen)) goto DIE;
   }
 
+  
 
   HAVENS:
   for (j = 0;j < QUERY_MAXNS;++j)
@@ -484,6 +505,11 @@ static int doit(struct query *z,int state)
   control = z->control[z->level];
   d = z->name[z->level];
   dtype = z->level ? DNS_T_A : z->type;
+
+  if (*z->cacheprefix)
+    cache_prefix_set(z->cacheprefix);
+  else
+    cache_prefix_reset();
 
   pos = dns_packet_copy(buf,len,0,header,12); if (!pos) goto DIE;
   pos = dns_packet_skipname(buf,len,pos); if (!pos) goto DIE;
@@ -540,7 +566,6 @@ static int doit(struct query *z,int state)
     uint16_unpack_big(header + 8,&datalen);
     pos += datalen;
   }
-  posglue = pos;
 
 
   if (!flagcname && !rcode && !flagout && flagreferral && !flagsoa)
@@ -605,7 +630,7 @@ static int doit(struct query *z,int state)
     }
 
     if (!dns_domain_suffix(t1,control)) { i = j; continue; }
-    if (!roots_same(t1,control)) { i = j; continue; }
+    if (!roots_same2(t1,control, z->cacheprefix)) { i = j; continue; }
 
     if (byte_equal(type,2,DNS_T_ANY))
       ;
@@ -855,34 +880,36 @@ static int doit(struct query *z,int state)
 
 
   DIE:
+  printf("oops: %d\n", z->loop);
   cleanup(z);
   if (records) { alloc_free(records); records = 0; }
   return -1;
 }
 
-int query_start(struct query *z,char *dn,char type[2],char class[2],char localip[4])
+int query_start(struct query *z,char *dn,char type[2],char class[2],char localip[4],char *cacheprefix)
 {
   if (byte_equal(type,2,DNS_T_AXFR)) { errno = error_perm; return -1; }
 
   cleanup(z);
   z->level = 0;
   z->loop = 0;
+  byte_zero(z->cacheprefix, QUERY_CACHEPREFIXLEN);
 
   if (!dns_domain_copy(&z->name[0],dn)) return -1;
   byte_copy(z->type,2,type);
   byte_copy(z->class,2,class);
   byte_copy(z->localip,4,localip);
 
-  return doit(z,0);
+  return doit(z,0, cacheprefix);
 }
 
 int query_get(struct query *z,iopause_fd *x,struct taia *stamp)
 {
   switch(qmerge_get(&z->qm,x,stamp)) {
     case 1:
-      return doit(z,1);
+      return doit(z,1, 0);
     case -1:
-      return doit(z,-1);
+      return doit(z,-1, 0);
   }
   return 0;
 }

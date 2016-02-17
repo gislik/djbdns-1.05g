@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -37,34 +38,77 @@ static int roots_search(char *q)
 
   for (;;) {
     r = roots_find(q);
-    if (r >= 0) return r;
-    if (!*q) return -1; /* user misconfiguration */
-    q += *q;
-    q += 1;
+    if (r >= 0) 
+      return r;
+    if (!dns_domain_walk(&q, 0)) return -1; /* user misconfiguration */
   }
 }
 
-int roots(char servers[64],char *q)
+int roots(char servers[64], int *isrecursive, char *q)
 {
   int r;
   r = roots_find(q);
   if (r == -1) return 0;
   byte_copy(servers,64,data.s + r);
+  *isrecursive = !!recursive.s[r];
   return 1;
 }
 
-int recflag(int *isrecursive,char *q)
+int roots_find2(char *q, char *prefix) 
 {
   int r;
-  r = roots_find(q);
-  if (r == -1) return 0;
-  *isrecursive=!!recursive.s[r];
-  return 1;
+  char *p = 0;
+  if (!q) return 0;
+  if (!dns_domain_prepends2(&p, q, prefix, "$")) return 0;
+  r = roots_find(p);
+  if (r >= 0) {
+    if (byte_equal(data.s + r, 4, "\0\0\0\0")) return -r;
+    return r;
+  }
+  return 0;
 }
 
-int roots_same(char *q,char *q2)
+int roots_search2(char *q, char *prefix)
 {
-  return roots_search(q) == roots_search(q2);
+  int r;
+  for (;;) {
+    r = roots_find2(q, prefix);
+    if (r) return r;
+    if (!dns_domain_walk(&q, 0)) return 0;
+  }
+
+}
+
+int roots2(char servers[64], int *isrecursive, char *q,char *prefix) 
+{
+  int r;
+  for (;;) {
+    r = roots_find2(q, prefix);
+    if (r > 0) {
+      if (servers) byte_copy(servers,64,data.s + r);
+      if (isrecursive) *isrecursive = !!recursive.s[r];
+      return 1;
+    } else if (r < 0) {
+      if (isrecursive) *isrecursive = !!recursive.s[r];
+      return -1;
+    }
+    if (!dns_domain_walk(&q, 0)) return 0;
+  }
+}
+
+int roots_same2(char *q1,char *q2, char *prefix)
+{
+  int r1, r2;
+  do {
+    r1 = roots_search2(q1, prefix);
+    if (!dns_domain_walk(&q1, 0)) r1 = 0;
+  } while (r1 < 0);
+  do {
+    r2 = roots_search2(q2, prefix);
+    if (!dns_domain_walk(&q2, 0)) r2 = 0;
+  } while (r2 < 0);
+  if (r1 == r2) return 1;
+  return roots_search(q1) == roots_search(q2);
 }
 
 static int init2(DIR *dir)

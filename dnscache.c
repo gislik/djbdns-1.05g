@@ -27,6 +27,10 @@
 #include "maxclient.h"
 #include "openreadclose.h"
 
+#ifdef MAXMIND
+#include "maxmind.h"
+#endif
+
 stralloc ignoreip = {0};
 #ifdef MINTTL
 uint32 mincachettl = 0;
@@ -101,6 +105,9 @@ void u_new(void)
   char qtype[2];
   char qclass[2];
 
+  char *prefix = 0;
+  char ipstr[IP4_FMT];
+
   for (j = 0;j < MAXUDP;++j)
     if (!u[j].active)
       break;
@@ -126,8 +133,19 @@ void u_new(void)
   if (!packetquery(buf,len,&q,qtype,qclass,x->id)) return;
 
   x->active = ++numqueries; ++uactive;
+
+  len = ip4_fmt(ipstr, x->ip);
+  ipstr[len] = 0;
+
+
+#ifdef MAXMIND
+  prefix = maxmind_lookup(ipstr);
+  log_query(&x->active,x->ip,x->port,x->id,q,qtype, prefix);
+#else
   log_query(&x->active,x->ip,x->port,x->id,q,qtype);
-  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing)) {
+#endif
+
+  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing, prefix)) {
     case -1:
       u_drop(j);
       return;
@@ -218,7 +236,10 @@ void t_rw(int j)
   static char *q = 0;
   char qtype[2];
   char qclass[2];
+  char *prefix = 0;
+  char ipstr[IP4_FMT];
   int r;
+  int len;
 
   x = t + j;
   if (x->state == -1) {
@@ -260,8 +281,17 @@ void t_rw(int j)
   if (!packetquery(x->buf,x->len,&q,qtype,qclass,x->id)) { t_close(j); return; }
 
   x->active = ++numqueries;
+
+  len = ip4_fmt(ipstr, x->ip);
+  ipstr[len] = 0;
+
+#ifdef MAXMIND
+  prefix = maxmind_lookup(ipstr);
+  log_query(&x->active,x->ip,x->port,x->id,q,qtype, prefix);
+#else
   log_query(&x->active,x->ip,x->port,x->id,q,qtype);
-  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing)) {
+#endif
+  switch(query_start(&x->q,q,qtype,qclass,myipoutgoing,prefix)) {
     case -1:
       t_drop(j);
       return;
@@ -401,6 +431,7 @@ static void do_dump(void)
 #endif
 
 #define FATAL "dnscache: fatal: "
+#define WARNING "dnscache: warning: "
 
 char seed[128];
 
@@ -499,10 +530,23 @@ int main()
   if (socket_listen(tcp53,20) == -1)
     strerr_die2sys(111,FATAL,"unable to listen on TCP socket: ");
 
+#ifdef MAXMIND
+  x = env_get("GEOIP");
+  if (x)
+    maxmind_init(x);
+  else
+    /* strerr_die2x(111,FATAL,"$GEOIP not set"); */
+    strerr_warn2(WARNING,"$GEOIP not set", 0);
+
+#endif
+
 #ifdef DUMPCACHE
   sig_catch(sig_alarm,do_dump);
 #endif
 
   log_startup();
   doit();
+#ifdef MAXMIND
+  maxmind_free();
+#endif
 }

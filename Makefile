@@ -10,12 +10,12 @@ alloc.a: \
 makelib alloc.o alloc_re.o getln.o getln2.o stralloc_cat.o \
 stralloc_catb.o stralloc_cats.o stralloc_copy.o stralloc_eady.o \
 stralloc_num.o stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
-stralloc_ppnb.o stralloc_ppnd.o stralloc_ppns.o stralloc_free.o
+stralloc_ppnb.o stralloc_ppnd.o stralloc_ppns.o 
 	./makelib alloc.a alloc.o alloc_re.o getln.o getln2.o \
 	stralloc_cat.o stralloc_catb.o stralloc_cats.o \
 	stralloc_copy.o stralloc_eady.o stralloc_num.o \
 	stralloc_opyb.o stralloc_opys.o stralloc_pend.o \
-	stralloc_ppnb.o stralloc_ppns.o stralloc_ppnd.o stralloc_free.o
+	stralloc_ppnb.o stralloc_ppns.o stralloc_ppnd.o 
 
 alloc.o: \
 compile alloc.c alloc.h error.h
@@ -232,11 +232,13 @@ choose compile trydrent.c direntry.h1 direntry.h2
 dns.a: \
 makelib dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o dns_ipq.o dns_mx.o \
 dns_name.o dns_nd.o dns_packet.o dns_random.o dns_rcip.o dns_rcrw.o \
-dns_resolve.o dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o dns_dpnd.o 
+dns_resolve.o dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o \
+dns_dpnd.o dns_dwlk.o
 	./makelib dns.a dns_dfd.o dns_domain.o dns_dtda.o dns_ip.o \
 	dns_ipq.o dns_mx.o dns_name.o dns_nd.o dns_packet.o \
 	dns_random.o dns_rcip.o dns_rcrw.o dns_resolve.o \
-	dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o dns_dpnd.o
+	dns_rotateip.o dns_sortip.o dns_transmit.o dns_txt.o \
+	dns_dpnd.o dns_dwlk.o
 
 dns_dfd.o: \
 compile dns_dfd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
@@ -247,6 +249,10 @@ dns_dpnd.o: \
 compile dns_dpnd.c error.h alloc.h byte.h dns.h stralloc.h gen_alloc.h \
 iopause.h taia.h tai.h uint64.h taia.h
 	./compile dns_dpnd.c
+
+dns_dwlk.o: \
+compile dns_dwlk.c
+	./compile dns_dwlk.c
 
 dns_domain.o: \
 compile dns_domain.c error.h alloc.h case.h byte.h dns.h stralloc.h \
@@ -330,13 +336,17 @@ compile dns_txt.c stralloc.h gen_alloc.h uint16.h byte.h dns.h \
 stralloc.h iopause.h taia.h tai.h uint64.h taia.h
 	./compile dns_txt.c
 
+maxmind.o: \
+compile maxmind.c maxmind.h byte.h exit.h
+	./compile maxmind.c 
+
 dnscache: \
 load dnscache.o droproot.o okclient.o log.o cache.o query.o qmerge.o \
-response.o dd.o roots.o iopause.o prot.o dns.a env.a alloc.a buffer.a \
-libtai.a unix.a byte.a sig.a socket.lib
+response.o dd.o roots.o iopause.o prot.o maxmind.o dns.a env.a alloc.a \
+buffer.a libtai.a unix.a byte.a sig.a libmaxminddb.a socket.lib
 	./load dnscache droproot.o okclient.o log.o cache.o \
-	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o dns.a \
-	env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a `cat \
+	query.o qmerge.o response.o dd.o roots.o iopause.o prot.o maxmind.o \
+	dns.a env.a alloc.a buffer.a libtai.a unix.a byte.a sig.a libmaxminddb.a `cat \
 	socket.lib`
 
 dnscache-conf: \
@@ -899,11 +909,6 @@ stralloc_pend.o: \
 compile stralloc_pend.c alloc.h stralloc.h gen_alloc.h \
 gen_allocdefs.h
 	./compile stralloc_pend.c
-
-stralloc_free.o: \
-compile stralloc_free.c alloc.h stralloc.h gen_alloc.h \
-gen_allocdefs.h
-	./compile stralloc_free.c
 
 stralloc_ppnb.o: \
 compile stralloc_ppnb.c alloc.h stralloc.h gen_alloc.h byte.h \

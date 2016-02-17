@@ -114,6 +114,18 @@ void log_dump(int err)
 }
 #endif
 
+#ifdef MAXMIND
+void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id[2],const char *q,const char qtype[2], const char *country)
+{
+  string("query "); number(*qnum); space();
+  ip(client); string(":"); hex(port >> 8); hex(port & 255);
+  string(":"); logid(id); space();
+  logtype(qtype); space(); name(q); space(); 
+  if (country) string(country);
+  else string("??");
+  line();
+}
+#else
 void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id[2],const char *q,const char qtype[2])
 {
   string("query "); number(*qnum); space();
@@ -122,6 +134,7 @@ void log_query(uint64 *qnum,const char client[4],unsigned int port,const char id
   logtype(qtype); space(); name(q);
   line();
 }
+#endif
 
 void log_querydone(uint64 *qnum,unsigned int len)
 {
@@ -200,6 +213,13 @@ void log_cachednxdomain(const char *dn)
 {
   string("cached nxdomain "); name(dn);
   line();
+}
+
+void log_cacheprefix(const char *p, unsigned int len)
+{
+    string("cache prefix "); 
+    buffer_put(buffer_2, p, len);
+    line();
 }
 
 void log_nxdomain(const char server[4],const char *q,unsigned int ttl)
@@ -313,3 +333,6 @@ void log_stats(void)
   number(tactive);
   line();
 }
+
+#ifdef MAXMIND
+#endif
