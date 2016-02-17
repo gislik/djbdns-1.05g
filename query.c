@@ -184,7 +184,7 @@ static int doit(struct query *z,int state)
   int flagreferral;
   int flagsoa;
   int flagexact;
-  char *ed = 0; 
+  static char *ed = 0;
   uint32 ttl;
   uint32 soattl;
   uint32 cnamettl;
