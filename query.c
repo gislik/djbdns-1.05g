@@ -185,8 +185,10 @@ static int doit(struct query *z,int state, char *cacheprefix)
   int flagreferral;
   int flagsoa;
   int flagexact = 0;
+  int flagdrop6 = 0;
   int flagcacheprefix = 0;
   char *ed = 0; 
+  char *dd = 0; 
   /* char *cd = 0;  */
   uint32 ttl;
   uint32 soattl;
@@ -253,6 +255,9 @@ static int doit(struct query *z,int state, char *cacheprefix)
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
     } else {
+      if (!dns_domain_prepends(&dd, d, "%")) goto DIE;
+      if (roots_search(dd) && typematch(DNS_T_AAAA, dtype) && dns_domain_length(d) != 1)
+        flagdrop6 = 1;
       if (cacheprefix)
         flagcacheprefix = roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix);
       if (flagcacheprefix) {
@@ -431,10 +436,12 @@ static int doit(struct query *z,int state, char *cacheprefix)
       if (roots_find2(d, cacheprefix) == 1)
         flagcacheprefix = 1;
     } 
-    if (flagexact || flagcacheprefix == 1 || roots(z->servers[z->level],&z->isrecursive[z->level],d)) {
+    if (flagexact || flagcacheprefix == 1 || flagdrop6 || roots(z->servers[z->level],&z->isrecursive[z->level],d)) {
       for (j = 0;j < QUERY_MAXNS;++j)
         dns_domain_free(&z->ns[z->level][j]);
       z->control[z->level] = d;
+      if (flagdrop6)
+          goto NXDOMAIN;
       break;
     }
 
