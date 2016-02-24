@@ -254,8 +254,7 @@ static int doit(struct query *z,int state, char *cacheprefix)
       byte_copy(z->cacheprefix, QUERY_CACHEPREFIXLEN, " =");
       cache_prefix_set(z->cacheprefix);
     } else {
-      if (!dns_domain_prepends(&dd, d, "%")) goto DIE;
-      if (roots_search(dd) && typematch(DNS_T_AAAA, dtype) && dns_domain_length(d) != 1)
+      if (typematch(DNS_T_AAAA, dtype) && roots_search2(d, "%") > 0)
         flagdrop6 = 1;
       if (cacheprefix)
         flagcacheprefix = roots2(z->servers[z->level], &z->isrecursive[z->level], d, cacheprefix);

@@ -32,7 +32,7 @@ static int roots_find(char *q)
   return -1;
 }
 
-int roots_search(char *q)
+static int roots_search(char *q)
 {
   int r;
 
